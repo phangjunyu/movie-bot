@@ -15,7 +15,7 @@
   "scripts": {
     "test": "mocha ./tests/lib.js"
   },
-  "repository": "https://github.com/phangjunyu/vouchmoviebot",
+  "repository": "https://josephling87@bitbucket.org/josephling87/moviebot.git",
   "author": "phangjunyu",
   "dependencies": {
     "isomorphic-fetch": "^2.2.1",
