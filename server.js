@@ -19,7 +19,7 @@ const express = require('express');
 const fetch = require('node-fetch');
 const request = require('request');
 const moment = require('moment');
-const searchService = require('./searchService');
+const searchService = require('./JS/searchService');
 const mongoose = require('mongoose');
 const async = require('async');
 
@@ -40,15 +40,15 @@ let Wit = null;
 let log = null;
 try {
   // if running from repo
-  Wit = require('../').Wit;
-  log = require('../').log;
+  Wit = require('./').Wit;
+  log = require('./').log;
 } catch (e) {
   Wit = require('node-wit').Wit;
   log = require('node-wit').log;
 }
 
 // Webserver parameter
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 80;
 
 // Wit.ai parameters
 const WIT_TOKEN = process.env.WIT_TOKEN || '5EAOJOW4JJZZIWPUGXLQ4B6UBKJBJTDM';
