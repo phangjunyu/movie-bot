@@ -51,15 +51,15 @@ try {
 const PORT = process.env.PORT || 5000;
 
 // Wit.ai parameters
-const WIT_TOKEN = process.env.WIT_TOKEN || '5EAOJOW4JJZZIWPUGXLQ4B6UBKJBJTDM';
+const WIT_TOKEN = process.env.WIT_TOKEN || '2DOU3VRLIV27HARM4STH5ORTKVQ3LCDV';
 
 // Messenger API parameters
-const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAZA7FbmJywkBAIw8ovBRP3r2dbhiqJ4k7uFupxvUqq455tjnjFyxbWCSs8e4zkk4eKrYkkY4ZBU0ZBZC6TZB1zk27V39zTroelpofh7M3II5G19f9oMZBZAs4ZBfaVMqeLZClR4d5mv7bA6f0KUzAZAc360rzNUYSs4aMuMyu9ZClXSgZDZD';
+const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAX94gbB7OIBALO6SeWLf1ZAQUGTLfIRMGZA5YK1bfRzNgM7uhj1LwOKFro4AnZAVntUmJTCdZCFwECipDsuWSXvsdiL4byP8mxAIPsOrUIGNdTyhyGXW9hmnKQO8ZBshr7il9hzXWfRJl2evBk4RqlggjHtIMhyUFqvULBojZCgZDZD';
 if (!FB_PAGE_TOKEN) { throw new Error('missing FB_PAGE_TOKEN') }
-const FB_APP_SECRET = process.env.FB_APP_SECRET || '16b510b46fe3a12f91a42acb2ba5b2d4';
+const FB_APP_SECRET = process.env.FB_APP_SECRET || '84f1b7362715035cd132a3fd67ed4c5f';
 if (!FB_APP_SECRET) { throw new Error('missing FB_APP_SECRET') }
 
-const FB_VERIFY_TOKEN = "VERIFICATION_123";
+const FB_VERIFY_TOKEN = "manekinekohaha";
 // crypto.randomBytes(8, (err, buff) => {
 //   if (err) throw err;
 //   FB_VERIFY_TOKEN = buff.toString('hex');
@@ -147,28 +147,52 @@ const actions = {
   },
   getCinema({context, entities}) {
       context.reset = false;
-      console.log(`The current context is ${JSON.stringify(context)}`);
-      console.log(`Wit extracted ${JSON.stringify(entities)}`);
+      // console.log(`The current context is ${JSON.stringify(context)}`);
+      // console.log(`Wit extracted ${JSON.stringify(entities)}`);
       return new Promise((resolve, reject)=> {
         const movie = firstEntityValue(entities, 'movie');
         if (movie){
           console.log('setting movie: ' + movie);
           context.movie = movie;
         }
+        
         const showTime = firstEntityValue(entities, 'datetime');
-        // if(showTime){
-          console.log("setting showTime: " + showTime);
-          const parsedShowDay = moment(showTime).format("dddd");
+        console.log(showTime);
+        var parsedShowTime;
+         if(showTime){
+          //console.log("setting showTime: " + showTime);
+          parsedShowTime = moment(showTime, ["HH:mm:ss", moment.ISO_8601]).format("HH:mm");
+          //format showtime at numbers only
           // const parsedShowDay = parsedShowTime.concat("day");
+          console.log(parsedShowTime);
+        }
+
+        const parsedShowDay = firstEntityValue(entities, 'datetime')
+        if(showTime){
+          //console.log("setting showDay: " + showDay);
+          const parsedShowDay = moment(showTime, ["YYYY-MM-DD", moment.ISO_8601]).format("MM-DD");
           console.log(parsedShowDay);
+        }
+        var location12;
+        var contextInput = 
+                      {
+                        "desired_title": movie,
+                        "desired_timing": parsedShowTime,
+                        "desired_day": parsedShowDay,
+                        "desired_location": location12
+                      } 
           // context.showTime = parsedShowTime;
           // const result = findCinema(movie, parsedShowDay);
+          console.log(contextInput);
 
-          searchService.findQuery(context.movie, parsedShowDay, function(err, result){
+          //searchService.findQuery(context.movie, parsedShowDay, parsedShowTime, location, function(err, result){
+          searchService.findTheNearestTime(contextInput, function(err, result){
+            console.log('am i in ');
               if(err) {return console.log(err);}
               if(result == null){
                 return resolve(context);
               }
+              console.log('in the send function');
               context.movie = result.title;
               context.cinema = result.cinema;
               context.showTime = result.timing;
@@ -206,6 +230,7 @@ app.use(bodyParser.json({ verify: verifyRequestSignature }));
 
 // Webhook setup
 app.get('/webhook', (req, res) => {
+  console.log('hello');
   if (req.query['hub.mode'] === 'subscribe' &&
     req.query['hub.verify_token'] === FB_VERIFY_TOKEN) {
     console.log("Validating webhook");
@@ -218,6 +243,7 @@ app.get('/webhook', (req, res) => {
 
 // Message handler
 app.post('/webhook', (req, res) => {
+  console.log('hello');
     // Parse the Messenger payload
   // See the Webhook reference
   // https://developers.facebook.com/docs/messenger-platform/webhook-reference
