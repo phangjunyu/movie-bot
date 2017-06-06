@@ -27,7 +27,7 @@ const ams = require('../webscraper/allMoviesScraper');
 const sms = require('../webscraper/singleMovieScraper');
 
 mongoose.connect('mongodb://test12:12test@ds137261.mlab.com:37261/hunglinga12');
-//mongoose.connect('mongodb://junyu_test:junyu123@ds161471.mlab.com:61471/movies');
+// mongoose.connect('mongodb://junyu_test:junyu123@ds161471.mlab.com:61471/movies');
 
 function firstEntityValue(entities, entity){
   const val = entities && entities[entity] &&
@@ -99,6 +99,47 @@ const fbMessage = (id, text) => {
 };
 
 
+const fbMessageCarouselCinemas = (id, title, results) => {
+  //process result
+  var elementArray = [];
+  console.log(results);
+  results.forEach(function(result) {
+    var element = {
+        title: result._id,//cinema name,
+        //subtitle: // cinema location,
+        //item_url: productUrl,
+        //image_url: // cinema logo
+
+    };
+
+    var buttonArray = [];
+    var timings = result.timings;
+    console.log(timings);
+    console.log(result);
+    var bookingLinks = result.bookingLinks
+    timings.forEach(function(timing, index) {
+      //console.log(timing);
+      var timing = moment(timing).format('HH:mm');
+      var button = {
+          "type": "web_url",
+          "url": 'http://google.com',
+          "title": timing,
+          "webview_height_ratio": "full"
+      };
+      buttonArray.push(button);
+
+    })
+    element.buttons = buttonArray;
+    elementArray.push(element);
+  })
+  
+ 
+  //send carousel message
+  sendGenericMessage(id, elementArray, FB_PAGE_TOKEN, function(err, response) {
+    
+  }) 
+};
+
 // ----------------------------------------------------------------------------
 // Wit.ai bot specific code
 
@@ -126,7 +167,10 @@ const findOrCreateSession = (fbid) => {
 
 // Our bot actions
 const actions = {
-  send({sessionId}, {text}) {
+  send(request, response) {
+    var sessionId = request.sessionId;
+    var text = response.text;
+    var context = request.context;
     console.log('I am in the send function');
     // Our bot has something to say!
     // Let's retrieve the Facebook user whose session belongs to
@@ -135,7 +179,16 @@ const actions = {
       // Yay, we found our recipient!
       // Let's forward our bot response to her.
       // We return a promise to let our bot know when we're done sending
-      return fbMessage(recipientId, text)
+      console.log(JSON.stringify(context));
+      if(context.title && context.result && context.requestedTime) {
+        //console.log('>>>>>>>>>>',context.result);
+        fbMessageCarouselCinemas(recipientId, context.title, JSON.parse(context.result));
+        
+        return
+      } 
+        return fbMessage(recipientId, text)
+      
+      
       .then(() => null)
       .catch((err) => {
         console.error(
@@ -157,7 +210,8 @@ const actions = {
         const movie = firstEntityValue(entities, 'movie');
         if (movie){
           // console.log('setting movie: ' + movie);
-          context.movie = movie;
+          context.title = movie;
+
         }        
         var datetime = firstEntityValue(entities, 'datetime');
         // console.log(timings);
@@ -181,12 +235,12 @@ const actions = {
 
         const location = firstEntityValue(entities, 'cinema_location')
         // console.log(location);
-        
-        
-        context = { 
+
+
+        context = {
                     title : movie,
                     timings : datetime,
-                    cinemaName : location
+                    //cinemaName : location
                   };
 
                   console.log(context);
@@ -198,13 +252,16 @@ const actions = {
                 return resolve(context);
               }
               // console.log('in the send function');
-              context.title = result.title;
-              context.cinemaName = result.cinema;
-              context.timings = result.timings;
+              context.title = movie;
+              context.requestedTime =  moment(datetime).toDate();
+              //console.log('<<<<<', result);
+              context.result = JSON.stringify(result);
+              if(context.title && context.result && context.requestedTime) {
+                context.reset = true;
+              } 
+              //context.reset = true;
 
-              context.reset = true;
-
-              // console.log(context);
+              //console.log(context);
               // console.log("reached the end of outer function");
               return resolve(context);
             }
@@ -295,9 +352,9 @@ app.post('/webhook', (req, res) => {
               // Example:
               if (context.reset){
               console.log('resetting context');
-              delete context.movie;
-              delete context.cinema;
-              delete context.showTime;
+              delete context.title;
+              delete context.result;
+              delete context.requestedTime;
               }
 
               // Updating the user's current session state
@@ -403,6 +460,37 @@ function verifyRequestSignature(req, res, buf) {
       throw new Error("Couldn't validate the request signature.");
     }
   }
+}
+
+function sendGenericMessage(recipient, elements, accessToken, callback) {
+    var messageData = {
+        "attachment": {
+            "type": "template",
+            "payload": {
+                "template_type": "generic",
+                "elements": elements
+            }
+        }
+    };
+    request({
+        url: 'https://graph.facebook.com/v2.6/me/messages',
+        qs: { access_token: accessToken },
+        method: 'POST',
+        json: {
+            recipient: { id: recipient },
+            message: messageData,
+        }
+    }, function(error, response, body) {
+        if (error) {
+            console.log('Error sending message: ', error);
+            return callback(error, null);
+        } else if (response.body.error) {
+            console.log('Error: ', response.body.error);
+            return callback(response.body.error, null);
+        } else {
+            return callback(null, response.body);
+        }
+    });
 }
 
 app.listen(PORT);

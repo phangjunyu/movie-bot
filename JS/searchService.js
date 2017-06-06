@@ -24,14 +24,14 @@ exports.findQuery = function(movie, showTime, callback){
 
 
 
-exports.findTheNearestTime = function(req, callback){
+exports.findTheNearestTime = function(context, callback){
 
 	//var maxTime = moment(req.timings, 'HH:mm').add(15, 'minutes').format('HHmm');
 	//var requestedTime = moment(req.timings, 'HH:mm').format('HHmm');
 	//var minTime = moment(req.timings, 'HH:mm').add(-15, 'minutes').format('HHmm');
-	var requestedTime = moment(req.timings).toDate();
-	var maxTime = moment(req.timings).add(30, 'minutes').toDate();
-	var minTime = moment(req.timings).add(-30, 'minutes').toDate(); 
+	var requestedTime = moment(context.timings).toDate();
+	var maxTime = moment(context.timings).add(30, 'minutes').toDate();
+	var minTime = moment(context.timings).add(-30, 'minutes').toDate(); 
 	//var maxTime = 
 	//console.log(req.timings);
 //console.log(requestedTime);
@@ -40,7 +40,7 @@ exports.findTheNearestTime = function(req, callback){
 	//console.log('timing is below:');
 	//console.log(maxTime, requestedTime);
 	var query =	{
-					title: req.title,
+					title: context.title,
 				}
 	var query2 = {
 		
@@ -75,6 +75,7 @@ exports.findTheNearestTime = function(req, callback){
 					{	title: 1,
 						timings: 1,
 						cinemaName: 1,
+						bookingLinks: 1,
 						difference: { $abs: {$subtract: [ "$timings", requestedTime]}}
 					}
 				},
@@ -89,16 +90,21 @@ exports.findTheNearestTime = function(req, callback){
 				// ,
 				{
 					$sort: {difference: 1}
-				}
-				,
+				},
+				{
+					$limit: 5
+				},
+			
 				{$group: 
+
 						{
 							_id: "$cinemaName",
 							timings : {$push: "$timings"}
 						}
 				}
 
-				
+
+
 			], function(err, result){
 				if (err) return(err);
 
@@ -115,11 +121,11 @@ exports.findTheNearestTime = function(req, callback){
 }
 
 function processTimings(title, results) {
-	//results contain 
+	//results contain
 
 
 	// Here's where you can watch Wonder Woman around 17:00
 	// WE Cinema - 1700, 1720, 1820 \n
-	// Cathay Cineleisure - 1700, 
+	// Cathay Cineleisure - 1700,
 
 }
