@@ -99,6 +99,42 @@ const fbMessage = (id, text) => {
 };
 
 
+const fbMessageCarouselCinemas = (id, results) => {
+  //process result
+  var elementArray = [];
+  results.forEach(function(result) {
+    var element = {
+        title: result.title//cinema name,
+        //subtitle: // cinema location,
+        //item_url: productUrl,
+        //image_url: // cinema logo
+
+    };
+
+    var buttonArray = [];
+    var timings = result.timings;
+    var bookingLinks = result.bookingLinks
+    timings.forEach(function(timing, index) {
+      var button = {
+          "type": "web_url",
+          "url": bookingLinks[index],
+          "title": timing.toString(),
+          "webview_height_ratio": "full"
+      };
+      buttonArray.push(button);
+
+    })
+    element.buttons = buttonArray;
+    elementArray.push(element);
+  })
+  
+ 
+  //send carousel message
+  sendGenericMessage(id, elementArray, FB_PAGE_TOKEN, function(err, response) {
+
+  }) 
+};
+
 // ----------------------------------------------------------------------------
 // Wit.ai bot specific code
 
@@ -403,6 +439,37 @@ function verifyRequestSignature(req, res, buf) {
       throw new Error("Couldn't validate the request signature.");
     }
   }
+}
+
+function sendGenericMessage(recipient, elements, accessToken, callback) {
+    var messageData = {
+        "attachment": {
+            "type": "template",
+            "payload": {
+                "template_type": "generic",
+                "elements": elements
+            }
+        }
+    };
+    request({
+        url: 'https://graph.facebook.com/v2.6/me/messages',
+        qs: { access_token: accessToken },
+        method: 'POST',
+        json: {
+            recipient: { id: recipient },
+            message: messageData,
+        }
+    }, function(error, response, body) {
+        if (error) {
+            console.log('Error sending message: ', error);
+            return callback(error, null);
+        } else if (response.body.error) {
+            console.log('Error: ', response.body.error);
+            return callback(response.body.error, null);
+        } else {
+            return callback(null, response.body);
+        }
+    });
 }
 
 app.listen(PORT);
