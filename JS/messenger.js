@@ -22,6 +22,7 @@ const moment = require('moment');
 const searchService = require('./searchService');
 const mongoose = require('mongoose');
 const async = require('async');
+var Movie = require('./movie');
 
 mongoose.connect('mongodb://test12:12test@ds137261.mlab.com:37261/hunglinga12');
 
@@ -54,12 +55,12 @@ const PORT = process.env.PORT || 5000;
 const WIT_TOKEN = process.env.WIT_TOKEN || '2DOU3VRLIV27HARM4STH5ORTKVQ3LCDV';
 
 // Messenger API parameters
-const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAX94gbB7OIBALO6SeWLf1ZAQUGTLfIRMGZA5YK1bfRzNgM7uhj1LwOKFro4AnZAVntUmJTCdZCFwECipDsuWSXvsdiL4byP8mxAIPsOrUIGNdTyhyGXW9hmnKQO8ZBshr7il9hzXWfRJl2evBk4RqlggjHtIMhyUFqvULBojZCgZDZD';
+const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAZA7FbmJywkBALWOZAUQ0rr2mc7w9g3rX9bTeHlhptvedHlYgi7vnZCHf0dt5T9Pl9ejMPx93ZBSWCJNnr3AkgohUTsvPo4qbRqix8Cu4eoQU4h8x0tEU3986jB8b8zfaWGdD49s6ursYyG7IkApZAQWB1pGRfQ3TJbgxvZCdzwZDZD';
 if (!FB_PAGE_TOKEN) { throw new Error('missing FB_PAGE_TOKEN') }
 const FB_APP_SECRET = process.env.FB_APP_SECRET || '84f1b7362715035cd132a3fd67ed4c5f';
 if (!FB_APP_SECRET) { throw new Error('missing FB_APP_SECRET') }
 
-const FB_VERIFY_TOKEN = "manekinekohaha";
+const FB_VERIFY_TOKEN = "VOUCHMOVIEBOT";
 // crypto.randomBytes(8, (err, buff) => {
 //   if (err) throw err;
 //   FB_VERIFY_TOKEN = buff.toString('hex');
@@ -147,58 +148,60 @@ const actions = {
   },
   getCinema({context, entities}) {
       context.reset = false;
-      // console.log(`The current context is ${JSON.stringify(context)}`);
-      // console.log(`Wit extracted ${JSON.stringify(entities)}`);
       return new Promise((resolve, reject)=> {
         const movie = firstEntityValue(entities, 'movie');
         if (movie){
-          console.log('setting movie: ' + movie);
+          // console.log('setting movie: ' + movie);
           context.movie = movie;
         }
         
-        const showTime = firstEntityValue(entities, 'datetime');
-        console.log(showTime);
-        var parsedShowTime;
-         if(showTime){
+        var timings = firstEntityValue(entities, 'datetime');
+        // console.log(timings);
+        var parsedTimings;
+         if(timings){
           //console.log("setting showTime: " + showTime);
-          parsedShowTime = moment(showTime, ["HH:mm:ss", moment.ISO_8601]).format("HH:mm");
+          parsedTimings = moment(timings, ["HH:mm:ss", moment.ISO_8601]).format("HH:mm");
           //format showtime at numbers only
           // const parsedShowDay = parsedShowTime.concat("day");
-          console.log(parsedShowTime);
+          // console.log(parsedTimings);
         }
 
-        const parsedShowDay = firstEntityValue(entities, 'datetime')
-        if(showTime){
+        var parsedShowDay = firstEntityValue(entities, 'datetime');
+        // console.log(parsedShowDay);
+        if(parsedShowDay){
           //console.log("setting showDay: " + showDay);
-          const parsedShowDay = moment(showTime, ["YYYY-MM-DD", moment.ISO_8601]).format("MM-DD");
-          console.log(parsedShowDay);
+          parsedShowDay = moment(parsedShowDay, ["YYYY-MM-DD", moment.ISO_8601]).format("MM-DD");
+          // console.log(parsedShowDay);
         }
-        var location12;
-        var contextInput = 
-                      {
-                        "desired_title": movie,
-                        "desired_timing": parsedShowTime,
-                        "desired_day": parsedShowDay,
-                        "desired_location": location12
-                      } 
-          // context.showTime = parsedShowTime;
-          // const result = findCinema(movie, parsedShowDay);
-          console.log(contextInput);
 
-          //searchService.findQuery(context.movie, parsedShowDay, parsedShowTime, location, function(err, result){
-          searchService.findTheNearestTime(contextInput, function(err, result){
-            console.log('am i in ');
+        const location = firstEntityValue(entities, 'cinema_location')
+        // console.log(location);
+        
+        
+        context = { 
+                    title : movie,
+                    timings : parsedTimings,
+                    cinemaName : location
+                  };
+
+                  console.log(context);
+          searchService.findTheNearestTime(context, function(err, result){
+             // console.log('the result is:');
+             // console.log(result);
+           
               if(err) {return console.log(err);}
               if(result == null){
                 return resolve(context);
               }
-              console.log('in the send function');
-              context.movie = result.title;
-              context.cinema = result.cinema;
-              context.showTime = result.timing;
-              context.reset = true
-              console.log(context);
-              console.log("reached the end of outer function");
+              // console.log('in the send function');
+              context.title = result.title;
+              context.cinemaName = result.cinema;
+              context.timings = result.timings;
+
+              context.reset = true;
+
+              // console.log(context);
+              // console.log("reached the end of outer function");
               return resolve(context);
             }
          )

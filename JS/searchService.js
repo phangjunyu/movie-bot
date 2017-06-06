@@ -23,34 +23,112 @@ exports.findQuery = function(movie, showTime, callback){
     })}
 
 
-exports.findTheNearestTime = function(req, callback){
-	var query = 
-				{
-					title: req.desired_title,
-					timing: req.desired_timing,
-					location: req.desired_location
-				}
+exports.findTheNearestTimeOld = function(req, callback){
+	//console.log('req is:')
+	//console.log(req);
+	var query = {};
+
+	query = {
+					title : req.title,
+					timing : req.timing,
+					location : req.cinema
+			}
+				
+				
 	if(query.timing == null || query.timing == undefined){
 		query.timing = moment().format('HHmm');
 	}
 	if(query.location == "" || query.location == undefined || query.location == null){
 		// run function to ask for location
-		query.location = 'West';
+		query.location = "Lido";
 	}
-	var maxTime = moment(query.timing, 'HH:mm').add(2, 'hours').format('HHmm');
+	var maxTime = moment(query.timing, 'HH:mm').add(1, 'hours').format('HHmm');
 	query.timing = moment(query.timing, 'HH:mm').format('HHmm');
+	var requestedTiming = parseInt(query.timing);
+	var setTime = parseInt(maxTime);
+	//console.log(query.title);
+	var query = { //$gte: query.timing, 
+							 	timing: { $gte: requestedTiming, $lte: maxTime }, 							
+							    title: query.title.toLowerCase().trim(),
+							    cinema: query.location 
+							 };
 
-	console.log(query);
+	// console.log(query);
 
-	Movie.find( 
-							 { timing: {$gte: query.timing, $lte: maxTime }, 							
-							   title: query.title , 
-							   cinema: query.location 
-							 }
-				)
+	Movie.find(query)
 	.exec(function(err, movieArray){
 		if(err) return (err);
-		//console.log(movieArray);
-		return callback(movieArray[0]);
+		// console.log('the result is:');
+		// console.log(movieArray[0]);
+		return callback(null,movieArray[0]);
 	})
+}
+
+exports.findTheNearestTime = function(req, callback){
+
+	var maxTime = moment(req.timings, 'HH:mm').add(30, 'minutes').format('HHmm');
+	var requestedTime = moment(req.timings, 'HH:mm').format('HHmm');
+
+	maxTime = parseInt(maxTime);
+	requestedTime = parseInt(requestedTime);
+	//console.log('timing is below:');
+	//console.log(maxTime, requestedTime);
+	var query =	{
+					title: req.title 
+				}
+	var query2 = {
+		
+		"timings": {
+			$lte: maxTime
+		}
+	}
+	var query3 = {
+
+		"timings": {
+			$gte:requestedTime
+		}
+		//cinemaName: req.cinemaName
+	}
+
+	//console.log(query, query2, query3);
+	Movie.aggregate([
+				{$match: query },
+				{$unwind: "$timings"},
+				// {$match: query2},
+				// {$match: query3},
+				{$project: 
+					{
+						difference: {$subtract: [ "$timings"]}	
+					} 
+				}
+				{$group: 
+						{
+							_id: "$cinemaName",
+							timings : {$push: "$timings"}
+						}
+				}
+
+				
+			], function(err, result){
+				if (err) return(err);
+
+				var replyString = processTimings(title, result);
+
+				console.log(result);
+
+				var result = JSON.stringify(result)
+
+				return callback(null, result);
+			})
+
+}
+
+function processTimings(title, results) {
+	//results contain 
+
+
+	// Here's where you can watch Wonder Woman around 17:00
+	// WE Cinema - 1700, 1720, 1820 \n
+	// Cathay Cineleisure - 1700, 
+
 }
