@@ -16,7 +16,7 @@ var movieSchema = new Schema({
         type: String
       },
     timings: {
-        type: [Number]
+        type: [Date]
       },
     bookingLinks: {
       type: [String]

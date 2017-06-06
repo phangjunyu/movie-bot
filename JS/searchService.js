@@ -34,10 +34,10 @@ exports.findTheNearestTime = function(req, callback){
 	//console.log('timing is below:');
 	//console.log(maxTime, requestedTime);
 	var query =	{
-					title: req.title 
+					title: req.title
 				}
 	var query2 = {
-		
+
 		"timings": {
 			$lte: maxTime
 		}
@@ -56,19 +56,19 @@ exports.findTheNearestTime = function(req, callback){
 				{$unwind: "$timings"},
 				// {$match: query2},
 				// {$match: query3},
-				{$project: 
+				{$project:
 					{
-						difference: {$subtract: [ "$timings"]}	
-					} 
-				}
-				{$group: 
+						difference: {$subtract: [ "$timings"]}
+					}
+				},
+				{$group:
 						{
 							_id: "$cinemaName",
 							timings : {$push: "$timings"}
 						}
 				}
 
-				
+
 			], function(err, result){
 				if (err) return(err);
 
@@ -84,11 +84,11 @@ exports.findTheNearestTime = function(req, callback){
 }
 
 function processTimings(title, results) {
-	//results contain 
+	//results contain
 
 
 	// Here's where you can watch Wonder Woman around 17:00
 	// WE Cinema - 1700, 1720, 1820 \n
-	// Cathay Cineleisure - 1700, 
+	// Cathay Cineleisure - 1700,
 
 }
