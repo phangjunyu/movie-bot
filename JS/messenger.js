@@ -27,7 +27,7 @@ const ams = require('../webscraper/allMoviesScraper');
 const sms = require('../webscraper/singleMovieScraper');
 
 mongoose.connect('mongodb://test12:12test@ds137261.mlab.com:37261/hunglinga12');
-//mongoose.connect('mongodb://junyu_test:junyu123@ds161471.mlab.com:61471/movies');
+// mongoose.connect('mongodb://junyu_test:junyu123@ds161471.mlab.com:61471/movies');
 
 function firstEntityValue(entities, entity){
   const val = entities && entities[entity] &&
@@ -194,7 +194,7 @@ const actions = {
         if (movie){
           // console.log('setting movie: ' + movie);
           context.movie = movie;
-        }        
+        }
         var timings = firstEntityValue(entities, 'datetime');
         // console.log(timings);
         var parsedTimings;
@@ -217,9 +217,9 @@ const actions = {
 
         const location = firstEntityValue(entities, 'cinema_location')
         // console.log(location);
-        
-        
-        context = { 
+
+
+        context = {
                     title : movie,
                     timings : parsedTimings,
                     cinemaName : location
