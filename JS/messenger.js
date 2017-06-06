@@ -112,13 +112,13 @@ const fbMessageCarouselCinemas = (id, results) => {
     };
 
     var buttonArray = [];
-    var timings = result.timings;
+    var timings = moment(result.timings); // result.timings is a Date
     var bookingLinks = result.bookingLinks
     timings.forEach(function(timing, index) {
       var button = {
           "type": "web_url",
           "url": bookingLinks[index],
-          "title": timing.toString(),
+          "title": timing.format('HH:mm'),
           "webview_height_ratio": "full"
       };
       buttonArray.push(button);
