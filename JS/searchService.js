@@ -66,7 +66,16 @@ exports.findTheNearestTime = function(context, callback){
 
 	Movie.aggregate([
 				{$match: query },
-				{$unwind: "$timings"},
+
+				{$unwind: {
+							path: "$bookingLinks",
+							includeArrayIndex: 'link_index'
+				}},
+
+				{$unwind: {		
+								path: "$timings",
+								includeArrayIndex: 'timing_index'
+				}},
 				{$match: query2},
 				{$match: query3},
 				//{$sort: {"$timings": 1}}
@@ -76,10 +85,15 @@ exports.findTheNearestTime = function(context, callback){
 						timings: 1,
 						cinemaName: 1,
 						bookingLinks: 1,
+						compare: {
+									$cmp:['$link_index', '$timing_index']
+						},
 						difference: { $abs: {$subtract: [ "$timings", requestedTime]}}
 					}
 				},
-
+				{
+					$match: {compare: 0}
+				},
 				// 		difference: {$abs:
 				// 							{$subtract: ["$date", Date()
 				// 					}
@@ -99,7 +113,9 @@ exports.findTheNearestTime = function(context, callback){
 
 						{
 							_id: "$cinemaName",
-							timings : {$push: "$timings"}
+
+							timings : {$push: "$timings"},
+							bookingLinks :{ $push: "$bookingLinks"}
 						}
 				}
 
@@ -109,9 +125,9 @@ exports.findTheNearestTime = function(context, callback){
 				if (err) return(err);
 
 				//var replyString = processTimings(req.title, result);
-				console.log('results incoming');
+				//console.log('results incoming');
 
-				console.log(result);
+				//console.log(result);
 
 				//ar result = JSON.stringify(result)
 

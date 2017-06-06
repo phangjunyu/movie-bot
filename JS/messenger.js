@@ -59,7 +59,7 @@ const WIT_TOKEN = process.env.WIT_TOKEN || '2DOU3VRLIV27HARM4STH5ORTKVQ3LCDV';
 
 // Messenger API parameters
 //const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAZA7FbmJywkBALWOZAUQ0rr2mc7w9g3rX9bTeHlhptvedHlYgi7vnZCHf0dt5T9Pl9ejMPx93ZBSWCJNnr3AkgohUTsvPo4qbRqix8Cu4eoQU4h8x0tEU3986jB8b8zfaWGdD49s6ursYyG7IkApZAQWB1pGRfQ3TJbgxvZCdzwZDZD';
-const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAX94gbB7OIBAMbdwcLkvlsywsrkCAo0SZADCjfOIZAZC9DQYERZAK0dqUAL3Vm1z8liSST3wH8yaawQ3JCffWN2TuamKkqbyDprln0F0ZCXWHa6il7pZBBkvokcmdCwUJiHaDnEuOiwAMBJNzZC4lMw6XHfepEAJzvWX2yB7o0kAZDZD';
+const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAX94gbB7OIBAM2Ah0CbBOdvr5vB8UJOdclXZC54cwxDFkEueqxSKPIHlREAD83ys6XFMGHN3mqOkV8qBesR12XRxNrA2QIAxcsILe2KHGZBzwTmv17JXR8gCP45g5cv0kS3bTxbnVgZAkC0bmfQlcTRNAFydwJvZAp3Q8eyugZDZD';
 
 if (!FB_PAGE_TOKEN) { throw new Error('missing FB_PAGE_TOKEN') }
 const FB_APP_SECRET = process.env.FB_APP_SECRET || '84f1b7362715035cd132a3fd67ed4c5f';
@@ -114,15 +114,16 @@ const fbMessageCarouselCinemas = (id, title, results) => {
 
     var buttonArray = [];
     var timings = result.timings;
-    console.log(timings);
-    console.log(result);
+    // console.log(timings);
+    // console.log(result);
     var bookingLinks = result.bookingLinks
+    // console.log(bookingLinks);
     timings.forEach(function(timing, index) {
       //console.log(timing);
       var timing = moment(timing).format('HH:mm');
       var button = {
           "type": "web_url",
-          "url": 'http://google.com',
+          "url": bookingLinks[index],
           "title": timing,
           "webview_height_ratio": "full"
       };
@@ -179,7 +180,8 @@ const actions = {
       // Yay, we found our recipient!
       // Let's forward our bot response to her.
       // We return a promise to let our bot know when we're done sending
-      console.log(JSON.stringify(context));
+      //console.log('<><><><>', JSON.stringify(context));
+
       if(context.title && context.result && context.requestedTime) {
         //console.log('>>>>>>>>>>',context.result);
         fbMessageCarouselCinemas(recipientId, context.title, JSON.parse(context.result));
@@ -243,7 +245,7 @@ const actions = {
                     //cinemaName : location
                   };
 
-                  console.log(context);
+                  //console.log(context);
           searchService.findTheNearestTime(context, function(err, result){
              // console.log('the result is:');
              // console.log(result);
@@ -254,7 +256,8 @@ const actions = {
               // console.log('in the send function');
               context.title = movie;
               context.requestedTime =  moment(datetime).toDate();
-              //console.log('<<<<<', result);
+              //console.log('<<<<<<<<<<',result);
+              console.log('<<<<<', result);
               context.result = JSON.stringify(result);
               if(context.title && context.result && context.requestedTime) {
                 context.reset = true;
