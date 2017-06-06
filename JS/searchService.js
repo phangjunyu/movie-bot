@@ -1,7 +1,7 @@
 'use strict'
 
 var mongoose = require('mongoose');
-var Movie = require('./movie');
+var Movie = require('../models/Movie');
 var moment = require('moment');
 
 exports.findQuery = function(movie, showTime, callback){
@@ -24,7 +24,7 @@ exports.findQuery = function(movie, showTime, callback){
 
 
 exports.findTheNearestTime = function(req, callback){
-	var query = 
+	var query =
 				{
 					title: req.desired_title,
 					timing: req.desired_timing,
@@ -42,10 +42,10 @@ exports.findTheNearestTime = function(req, callback){
 
 	console.log(query);
 
-	Movie.find( 
-							 { timing: {$gte: query.timing, $lte: maxTime }, 							
-							   title: query.title , 
-							   cinema: query.location 
+	Movie.find(
+							 { timing: {$gte: query.timing, $lte: maxTime },
+							   title: query.title ,
+							   cinema: query.location
 							 }
 				)
 	.exec(function(err, movieArray){

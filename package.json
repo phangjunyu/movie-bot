@@ -20,7 +20,11 @@
   "dependencies": {
     "isomorphic-fetch": "^2.2.1",
     "uuid": "^3.0.0",
-    "express":"4.15.3"
+    "express":"4.15.3",
+    "request"    : "latest",
+    "cheerio"    : "latest",
+    "moment"     : "latest",
+    "async"      : "latest"
   },
   "engines": {
     "node": ">=4.0.0"
