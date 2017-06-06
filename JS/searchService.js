@@ -1,7 +1,7 @@
 'use strict'
 
 var mongoose = require('mongoose');
-var Movie = require('./movie');
+var Movie = require('../models/Movie');
 var moment = require('moment');
 
 exports.findQuery = function(movie, showTime, callback){
@@ -23,46 +23,6 @@ exports.findQuery = function(movie, showTime, callback){
     })}
 
 
-exports.findTheNearestTimeOld = function(req, callback){
-	//console.log('req is:')
-	//console.log(req);
-	var query = {};
-
-	query = {
-					title : req.title,
-					timing : req.timing,
-					location : req.cinema
-			}
-				
-				
-	if(query.timing == null || query.timing == undefined){
-		query.timing = moment().format('HHmm');
-	}
-	if(query.location == "" || query.location == undefined || query.location == null){
-		// run function to ask for location
-		query.location = "Lido";
-	}
-	var maxTime = moment(query.timing, 'HH:mm').add(1, 'hours').format('HHmm');
-	query.timing = moment(query.timing, 'HH:mm').format('HHmm');
-	var requestedTiming = parseInt(query.timing);
-	var setTime = parseInt(maxTime);
-	//console.log(query.title);
-	var query = { //$gte: query.timing, 
-							 	timing: { $gte: requestedTiming, $lte: maxTime }, 							
-							    title: query.title.toLowerCase().trim(),
-							    cinema: query.location 
-							 };
-
-	// console.log(query);
-
-	Movie.find(query)
-	.exec(function(err, movieArray){
-		if(err) return (err);
-		// console.log('the result is:');
-		// console.log(movieArray[0]);
-		return callback(null,movieArray[0]);
-	})
-}
 
 exports.findTheNearestTime = function(req, callback){
 

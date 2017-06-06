@@ -22,9 +22,12 @@ const moment = require('moment');
 const searchService = require('./searchService');
 const mongoose = require('mongoose');
 const async = require('async');
-var Movie = require('./movie');
+const Movie = require('../models/Movie');
+const ams = require('../webscraper/allMoviesScraper');
+const sms = require('../webscraper/singleMovieScraper');
 
 mongoose.connect('mongodb://test12:12test@ds137261.mlab.com:37261/hunglinga12');
+//mongoose.connect('mongodb://junyu_test:junyu123@ds161471.mlab.com:61471/movies');
 
 function firstEntityValue(entities, entity){
   const val = entities && entities[entity] &&
@@ -56,8 +59,10 @@ const WIT_TOKEN = process.env.WIT_TOKEN || '2DOU3VRLIV27HARM4STH5ORTKVQ3LCDV';
 
 // Messenger API parameters
 const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAZA7FbmJywkBALWOZAUQ0rr2mc7w9g3rX9bTeHlhptvedHlYgi7vnZCHf0dt5T9Pl9ejMPx93ZBSWCJNnr3AkgohUTsvPo4qbRqix8Cu4eoQU4h8x0tEU3986jB8b8zfaWGdD49s6ursYyG7IkApZAQWB1pGRfQ3TJbgxvZCdzwZDZD';
+//const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAZA7FbmJywkBAPvSFNEjbBqeG7CsRmRDhXkZCUlmKEvWFZAbOHCJdRXIallDU4q1ssHKZB9PpNANAZCet3XBPnhLSweAXSn95ZBKG3ZAD6qYQbIfJ1AqpkQlB3ZBaSo4OUrLhLTbPD4m3IjhcnLWb61SyjmZBGd9f2jqgzdrvu9UIgZDZD';
+
 if (!FB_PAGE_TOKEN) { throw new Error('missing FB_PAGE_TOKEN') }
-const FB_APP_SECRET = process.env.FB_APP_SECRET || '84f1b7362715035cd132a3fd67ed4c5f';
+const FB_APP_SECRET = process.env.FB_APP_SECRET || '16b510b46fe3a12f91a42acb2ba5b2d4';
 if (!FB_APP_SECRET) { throw new Error('missing FB_APP_SECRET') }
 
 const FB_VERIFY_TOKEN = "VOUCHMOVIEBOT";
@@ -153,12 +158,12 @@ const actions = {
         if (movie){
           // console.log('setting movie: ' + movie);
           context.movie = movie;
-        }
-        
+        }        
         var timings = firstEntityValue(entities, 'datetime');
         // console.log(timings);
         var parsedTimings;
          if(timings){
+
           //console.log("setting showTime: " + showTime);
           parsedTimings = moment(timings, ["HH:mm:ss", moment.ISO_8601]).format("HH:mm");
           //format showtime at numbers only
@@ -188,7 +193,6 @@ const actions = {
           searchService.findTheNearestTime(context, function(err, result){
              // console.log('the result is:');
              // console.log(result);
-           
               if(err) {return console.log(err);}
               if(result == null){
                 return resolve(context);
@@ -311,6 +315,63 @@ app.post('/webhook', (req, res) => {
     res.sendStatus(200);
   }
 });
+
+app.get('/scrape', function(req, res, next){
+  var url = 'http://www.insing.com/movies/';
+  async.waterfall([
+    function startScraping(callback){
+      console.log("url is ", url);
+      ams.getAllCinemas(url, function(err, movieList){
+        if (err) return callback(err);
+        return callback(null, movieList);
+      })
+    },
+    function gotListOfMovies(movieList, callback){
+      async.map(movieList, sms.getShowTimesByMovie, function(err, result){
+        if (err){
+          console.log(err)
+          return err;
+        }
+        return callback(null, result);
+      });
+    }
+  ], function saveToDatabase(err, result){
+    if (err) return next(err);
+    var finalArray = []
+    //insertMany requires array to be inserted
+    for (var i = 0; i < result.length; i++){
+      finalArray = finalArray.concat(result[i]);
+    }
+    // console.log(finalArray);
+    async.waterfall([
+      function clearDataBase(callback){
+        Movie.remove({}, function onDelete(err, docs) {
+        if (err) {
+          console.log("Couldn't delete! Error: ", err)
+          return callback(err);
+        } else {
+          console.info('database cleared!');
+          return callback(null);
+        }
+      })
+    },
+    function insertNewValues(callback){
+      Movie.insertMany(finalArray, function onInsert(err, docs) {
+      if (err) {
+        console.log("Couldn;t upload! Error: ", err)
+        return callback(err);
+      } else {
+        console.info('new values uploaded!');
+        return callback(null);
+      }
+    })
+  }
+    ], function doneUploading(err, result){
+      if (err) return next(err);
+    })
+  })
+  res.sendStatus(200);
+})
 
 
 /*
