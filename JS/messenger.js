@@ -58,11 +58,11 @@ const PORT = process.env.PORT || 5000;
 const WIT_TOKEN = process.env.WIT_TOKEN || '2DOU3VRLIV27HARM4STH5ORTKVQ3LCDV';
 
 // Messenger API parameters
-const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAZA7FbmJywkBALWOZAUQ0rr2mc7w9g3rX9bTeHlhptvedHlYgi7vnZCHf0dt5T9Pl9ejMPx93ZBSWCJNnr3AkgohUTsvPo4qbRqix8Cu4eoQU4h8x0tEU3986jB8b8zfaWGdD49s6ursYyG7IkApZAQWB1pGRfQ3TJbgxvZCdzwZDZD';
-//const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAZA7FbmJywkBAPvSFNEjbBqeG7CsRmRDhXkZCUlmKEvWFZAbOHCJdRXIallDU4q1ssHKZB9PpNANAZCet3XBPnhLSweAXSn95ZBKG3ZAD6qYQbIfJ1AqpkQlB3ZBaSo4OUrLhLTbPD4m3IjhcnLWb61SyjmZBGd9f2jqgzdrvu9UIgZDZD';
+//const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAZA7FbmJywkBALWOZAUQ0rr2mc7w9g3rX9bTeHlhptvedHlYgi7vnZCHf0dt5T9Pl9ejMPx93ZBSWCJNnr3AkgohUTsvPo4qbRqix8Cu4eoQU4h8x0tEU3986jB8b8zfaWGdD49s6ursYyG7IkApZAQWB1pGRfQ3TJbgxvZCdzwZDZD';
+const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAX94gbB7OIBAMbdwcLkvlsywsrkCAo0SZADCjfOIZAZC9DQYERZAK0dqUAL3Vm1z8liSST3wH8yaawQ3JCffWN2TuamKkqbyDprln0F0ZCXWHa6il7pZBBkvokcmdCwUJiHaDnEuOiwAMBJNzZC4lMw6XHfepEAJzvWX2yB7o0kAZDZD';
 
 if (!FB_PAGE_TOKEN) { throw new Error('missing FB_PAGE_TOKEN') }
-const FB_APP_SECRET = process.env.FB_APP_SECRET || '16b510b46fe3a12f91a42acb2ba5b2d4';
+const FB_APP_SECRET = process.env.FB_APP_SECRET || '84f1b7362715035cd132a3fd67ed4c5f';
 if (!FB_APP_SECRET) { throw new Error('missing FB_APP_SECRET') }
 
 const FB_VERIFY_TOKEN = "VOUCHMOVIEBOT";
@@ -159,13 +159,13 @@ const actions = {
           // console.log('setting movie: ' + movie);
           context.movie = movie;
         }        
-        var timings = firstEntityValue(entities, 'datetime');
+        var datetime = firstEntityValue(entities, 'datetime');
         // console.log(timings);
         var parsedTimings;
-         if(timings){
+         if(datetime){
 
           //console.log("setting showTime: " + showTime);
-          parsedTimings = moment(timings, ["HH:mm:ss", moment.ISO_8601]).format("HH:mm");
+          parsedTimings = moment(datetime, ["HH:mm:ss", moment.ISO_8601]).format("HH:mm");
           //format showtime at numbers only
           // const parsedShowDay = parsedShowTime.concat("day");
           // console.log(parsedTimings);
@@ -185,7 +185,7 @@ const actions = {
         
         context = { 
                     title : movie,
-                    timings : parsedTimings,
+                    timings : datetime,
                     cinemaName : location
                   };
 
