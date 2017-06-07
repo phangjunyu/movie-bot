@@ -24,59 +24,112 @@ exports.findQuery = function(movie, showTime, callback){
 
 
 
-exports.findTheNearestTime = function(req, callback){
+exports.findTheNearestTime = function(context, callback){
 
-	var maxTime = moment(req.timings, 'HH:mm').add(30, 'minutes').format('HHmm');
-	var requestedTime = moment(req.timings, 'HH:mm').format('HHmm');
-
-	maxTime = parseInt(maxTime);
-	requestedTime = parseInt(requestedTime);
+	//var maxTime = moment(req.timings, 'HH:mm').add(15, 'minutes').format('HHmm');
+	//var requestedTime = moment(req.timings, 'HH:mm').format('HHmm');
+	//var minTime = moment(req.timings, 'HH:mm').add(-15, 'minutes').format('HHmm');
+	var requestedTime = moment(context.timings).toDate();
+	var maxTime = moment(context.timings).add(30, 'minutes').toDate();
+	var minTime = moment(context.timings).add(-30, 'minutes').toDate(); 
+	//var maxTime = 
+	//console.log(req.timings);
+//console.log(requestedTime);
+	// maxTime = parseInt(maxTime);
+	// minTime = parseInt(minTime);
 	//console.log('timing is below:');
 	//console.log(maxTime, requestedTime);
 	var query =	{
-					title: req.title
+					title: context.title,
 				}
 	var query2 = {
-
+		
+		// "timings": {
+		// 	$lte: maxTime
+		// }
 		"timings": {
+			//$gte: requestedTime,
 			$lte: maxTime
 		}
 	}
 	var query3 = {
 
 		"timings": {
-			$gte:requestedTime
-		}
-		//cinemaName: req.cinemaName
-	}
+			$gte: minTime
+		}}
 
+		console.log(maxTime, minTime);
+	// 	//cinemaName: req.cinemaName
+	// }
+	//console.log('query below: ');
 	//console.log(query, query2, query3);
+
 	Movie.aggregate([
 				{$match: query },
-				{$unwind: "$timings"},
-				// {$match: query2},
-				// {$match: query3},
-				{$project:
-					{
-						difference: {$subtract: [ "$timings"]}
+
+				{$unwind: {
+							path: "$bookingLinks",
+							includeArrayIndex: 'link_index'
+				}},
+
+				{$unwind: {		
+								path: "$timings",
+								includeArrayIndex: 'timing_index'
+				}},
+				{$match: query2},
+				{$match: query3},
+				//{$sort: {"$timings": 1}}
+
+				{$project: 
+					{	title: 1,
+						timings: 1,
+						cinemaName: 1,
+						bookingLinks: 1,
+						compare: {
+									$cmp:['$link_index', '$timing_index']
+						},
+						difference: { $abs: {$subtract: [ "$timings", requestedTime]}}
 					}
 				},
-				{$group:
+				{
+					$match: {compare: 0}
+				},
+				// 		difference: {$abs:
+				// 							{$subtract: ["$date", Date()
+				// 					}
+
+
+				
+				// }}
+				// ,
+				{
+					$sort: {difference: 1}
+				},
+				{
+					$limit: 5
+				},
+			
+				{$group: 
+
 						{
 							_id: "$cinemaName",
-							timings : {$push: "$timings"}
+
+							timings : {$push: "$timings"},
+							bookingLinks :{ $push: "$bookingLinks"}
 						}
 				}
+
 
 
 			], function(err, result){
 				if (err) return(err);
 
-				var replyString = processTimings(title, result);
+				//var replyString = processTimings(req.title, result);
+				//console.log('results incoming');
 
-				console.log(result);
+				//console.log(result);
 
-				var result = JSON.stringify(result)
+				//ar result = JSON.stringify(result)
 
 				return callback(null, result);
 			})

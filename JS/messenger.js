@@ -58,11 +58,11 @@ const PORT = process.env.PORT || 5000;
 const WIT_TOKEN = process.env.WIT_TOKEN || '2DOU3VRLIV27HARM4STH5ORTKVQ3LCDV';
 
 // Messenger API parameters
-const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAZA7FbmJywkBALWOZAUQ0rr2mc7w9g3rX9bTeHlhptvedHlYgi7vnZCHf0dt5T9Pl9ejMPx93ZBSWCJNnr3AkgohUTsvPo4qbRqix8Cu4eoQU4h8x0tEU3986jB8b8zfaWGdD49s6ursYyG7IkApZAQWB1pGRfQ3TJbgxvZCdzwZDZD';
-//const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAZA7FbmJywkBAPvSFNEjbBqeG7CsRmRDhXkZCUlmKEvWFZAbOHCJdRXIallDU4q1ssHKZB9PpNANAZCet3XBPnhLSweAXSn95ZBKG3ZAD6qYQbIfJ1AqpkQlB3ZBaSo4OUrLhLTbPD4m3IjhcnLWb61SyjmZBGd9f2jqgzdrvu9UIgZDZD';
+//const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAZA7FbmJywkBALWOZAUQ0rr2mc7w9g3rX9bTeHlhptvedHlYgi7vnZCHf0dt5T9Pl9ejMPx93ZBSWCJNnr3AkgohUTsvPo4qbRqix8Cu4eoQU4h8x0tEU3986jB8b8zfaWGdD49s6ursYyG7IkApZAQWB1pGRfQ3TJbgxvZCdzwZDZD';
+const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAX94gbB7OIBAM2Ah0CbBOdvr5vB8UJOdclXZC54cwxDFkEueqxSKPIHlREAD83ys6XFMGHN3mqOkV8qBesR12XRxNrA2QIAxcsILe2KHGZBzwTmv17JXR8gCP45g5cv0kS3bTxbnVgZAkC0bmfQlcTRNAFydwJvZAp3Q8eyugZDZD';
 
 if (!FB_PAGE_TOKEN) { throw new Error('missing FB_PAGE_TOKEN') }
-const FB_APP_SECRET = process.env.FB_APP_SECRET || '16b510b46fe3a12f91a42acb2ba5b2d4';
+const FB_APP_SECRET = process.env.FB_APP_SECRET || '84f1b7362715035cd132a3fd67ed4c5f';
 if (!FB_APP_SECRET) { throw new Error('missing FB_APP_SECRET') }
 
 const FB_VERIFY_TOKEN = "VOUCHMOVIEBOT";
@@ -99,27 +99,33 @@ const fbMessage = (id, text) => {
 };
 
 
-const fbMessageCarouselCinemas = (id, results) => {
+const fbMessageCarouselCinemas = (id, title, results) => {
   //process result
   var elementArray = [];
+  console.log(results);
   results.forEach(function(result) {
     var element = {
-      title: result.title//cinema name,
-      //subtitle: // cinema location,
-      //item_url: productUrl,
-      //image_url: // cinema logo
 
+        title: result._id,//cinema name,
+        //subtitle: // cinema location,
+        //item_url: productUrl,
+        //image_url: // cinema logo
     };
 
     var buttonArray = [];
-    var timings = moment(result.timings); // result.timings is a Date
+    var timings = result.timings;
+    // console.log(timings);
+    // console.log(result);
     var bookingLinks = result.bookingLinks
+    // console.log(bookingLinks);
     timings.forEach(function(timing, index) {
+      //console.log(timing);
+      var timing = moment(timing).format('HH:mm');
       var button = {
-        "type": "web_url",
-        "url": bookingLinks[index],
-        "title": timing.format('HH:mm'),
-        "webview_height_ratio": "full"
+          "type": "web_url",
+          "url": bookingLinks[index],
+          "title": timing,
+          "webview_height_ratio": "full"
       };
       buttonArray.push(button);
 
@@ -133,6 +139,7 @@ const fbMessageCarouselCinemas = (id, results) => {
   sendGenericMessage(id, elementArray, FB_PAGE_TOKEN, function(err, response) {
 
   })
+
 };
 
 // ----------------------------------------------------------------------------
@@ -162,7 +169,10 @@ const findOrCreateSession = (fbid) => {
 
 // Our bot actions
 const actions = {
-  send({sessionId}, {text}) {
+  send(request, response) {
+    var sessionId = request.sessionId;
+    var text = response.text;
+    var context = request.context;
     console.log('I am in the send function');
     // Our bot has something to say!
     // Let's retrieve the Facebook user whose session belongs to
@@ -171,7 +181,17 @@ const actions = {
       // Yay, we found our recipient!
       // Let's forward our bot response to her.
       // We return a promise to let our bot know when we're done sending
-      return fbMessage(recipientId, text)
+      //console.log('<><><><>', JSON.stringify(context));
+
+      if(context.title && context.result && context.requestedTime) {
+        //console.log('>>>>>>>>>>',context.result);
+        fbMessageCarouselCinemas(recipientId, context.title, JSON.parse(context.result));
+
+        return
+      }
+        return fbMessage(recipientId, text)
+
+
       .then(() => null)
       .catch((err) => {
         console.error(
@@ -188,24 +208,26 @@ const actions = {
     }
   },
   getCinema({context, entities}) {
-    context.reset = false;
-    return new Promise((resolve, reject)=> {
-      const movie = firstEntityValue(entities, 'movie');
-      if (movie){
-        // console.log('setting movie: ' + movie);
-        context.movie = movie;
-      }
-      var timings = firstEntityValue(entities, 'datetime');
-      // console.log(timings);
-      var parsedTimings;
-      if(timings){
 
-        //console.log("setting showTime: " + showTime);
-        parsedTimings = moment(timings, ["HH:mm:ss", moment.ISO_8601]).format("HH:mm");
-        //format showtime at numbers only
-        // const parsedShowDay = parsedShowTime.concat("day");
-        // console.log(parsedTimings);
-      }
+      context.reset = false;
+      return new Promise((resolve, reject)=> {
+        const movie = firstEntityValue(entities, 'movie');
+        if (movie){
+          // console.log('setting movie: ' + movie);
+          context.title = movie;
+
+        }
+        var datetime = firstEntityValue(entities, 'datetime');
+        // console.log(timings);
+        var parsedTimings;
+         if(datetime){
+
+          //console.log("setting showTime: " + showTime);
+          parsedTimings = moment(datetime, ["HH:mm:ss", moment.ISO_8601]).format("HH:mm");
+          //format showtime at numbers only
+          // const parsedShowDay = parsedShowTime.concat("day");
+          // console.log(parsedTimings);
+        }
 
       var parsedShowDay = firstEntityValue(entities, 'datetime');
       // console.log(parsedShowDay);
@@ -218,34 +240,37 @@ const actions = {
       const location = firstEntityValue(entities, 'cinema_location')
       // console.log(location);
 
+        context = {
+                    title : movie,
+                    timings : datetime,
+                    //cinemaName : location
+                  };
 
-      context = {
-        title : movie,
-        timings : parsedTimings,
-        cinemaName : cinema_location
-      };
+                  //console.log(context);
+          searchService.findTheNearestTime(context, function(err, result){
+             // console.log('the result is:');
+             // console.log(result);
+              if(err) {return console.log(err);}
+              if(result == null){
+                return resolve(context);
+              }
+              // console.log('in the send function');
+              context.title = movie;
+              context.requestedTime =  moment(datetime).toDate();
+              //console.log('<<<<<<<<<<',result);
+              console.log('<<<<<', result);
+              context.result = JSON.stringify(result);
+              if(context.title && context.result && context.requestedTime) {
+                context.reset = true;
+              }
+              //context.reset = true;
 
-      console.log(context);
-      searchService.findTheNearestTime(context, function(err, result){
-        // console.log('the result is:');
-        // console.log(result);
-        if(err) {return console.log(err);}
-        if(result == null){
-          return resolve(context);
-        }
-        // console.log('in the send function');
-        context.title = result.title;
-        context.cinemaName = result.cinema_location;
-        context.timings = result.timings;
-
-        context.reset = true;
-
-        // console.log(context);
-        // console.log("reached the end of outer function");
-        return resolve(context);
-      }
-    )
-    //  }
+              //console.log(context);
+              // console.log("reached the end of outer function");
+              return resolve(context);
+            }
+         )
+      //  }
     //  return resolve(context);
   })
 }
@@ -330,10 +355,11 @@ app.post('/webhook', (req, res) => {
               // This depends heavily on the business logic of your bot.
               // Example:
               if (context.reset){
-                console.log('resetting context');
-                delete context.movie;
-                delete context.cinema;
-                delete context.showTime;
+
+              console.log('resetting context');
+              delete context.title;
+              delete context.result;
+              delete context.requestedTime;
               }
 
               // Updating the user's current session state
