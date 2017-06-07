@@ -2,8 +2,9 @@
 
 var request = require('request');
 var cheerio = require('cheerio');
+var moment = require('moment');
 
-var url = "http://www.insing.com/movies/wonder-woman-2017/id-6aec0000/showtimes/?d=2017-06-06"
+var url = "http://www.insing.com/movies/"
 
 request(url, function(error, response, html){
   if(error){
@@ -14,8 +15,11 @@ request(url, function(error, response, html){
     callback(response.body.error, null);
   } else {
     var $ = cheerio.load(html);
-    var allShowTimes = [];
-    var scrapedDate = $('.dates-panel').children().children().first().find('a').attr('data-date')
-    console.log(scrapedDate);
+
+    var result = $('#movies-search-wrapper').find('.movies-date-id').children().eq(1).attr('data-value')
+
+    //.children('.inner').children('.entry').children().eq(2).children('.dropdown-container').find('input').attr('type')
+    //.children('.movies-date-id').children('li').eq(1).attr('data-value')
+    console.log(result);
   }
 })
