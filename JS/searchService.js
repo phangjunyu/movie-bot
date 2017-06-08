@@ -29,9 +29,15 @@ exports.findTheNearestTime = function(context, callback){
 	var maxTime = moment(context.timings).add(30, 'minutes').toDate();
 	var minTime = moment(context.timings).add(-30, 'minutes').toDate(); 
 console.log('am i in search service');
-	var regexquery = {
-
-	}
+	
+	//context.title is the name of the movie 
+	var searchTitle = context.title;
+	// .split(" ");
+	// var searchTerm	= searchTitle;
+	// var regTerm = searchTerm[0];
+	// var regexQuery = {
+	// 			title: {$regex: regTerm, $options: 'i'}
+	// }
 	
 	var query =	{
 					title: context.title,
@@ -71,7 +77,10 @@ console.log('am i in search service');
 
 	console.log(maxTime, minTime);
 	Movie.aggregate([
-				{$match: query },
+				{$match: 
+					{$text:{$search: searchTitle}}
+				},
+				{$match: regexQuery },
 				{$match: {cinemaName:{$in: areaArray }}},
 				{$unwind: {
 							path: "$bookingLinks",
