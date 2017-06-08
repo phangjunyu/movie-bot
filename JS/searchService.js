@@ -3,17 +3,17 @@
 var mongoose = require('mongoose');
 var Movie = require('../models/Movie');
 var moment = require('moment');
+var region = require('../region');
+var bodyParser = require('body-parser');
+const express = require('express');
+
+const app = express();
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.json());
 
 exports.findQuery = function(movie, showTime, callback){
     var query = {title: movie};
     var query1 = {timing: showTime};
-
-    // JOSEPH: u can do a Movie.find({title:movie, timing:showTime}, function(err, movieArray) {
-
-    //})
-
-    // dont use Caps in front of nonclasses, i.e. in this case movieArray is a variable so shouldnt be MovieArray
-
     Movie.find({$and: [  query, query1 ] } )
     .exec(function(err, movieArray){
         if (err) return callback(err);
@@ -25,63 +25,66 @@ exports.findQuery = function(movie, showTime, callback){
 
 
 exports.findTheNearestTime = function(context, callback){
-
-	//var maxTime = moment(req.timings, 'HH:mm').add(15, 'minutes').format('HHmm');
-	//var requestedTime = moment(req.timings, 'HH:mm').format('HHmm');
-	//var minTime = moment(req.timings, 'HH:mm').add(-15, 'minutes').format('HHmm');
 	var requestedTime = moment(context.timings).toDate();
 	var maxTime = moment(context.timings).add(30, 'minutes').toDate();
 	var minTime = moment(context.timings).add(-30, 'minutes').toDate(); 
-	//var maxTime = 
-	//console.log(req.timings);
-//console.log(requestedTime);
-	// maxTime = parseInt(maxTime);
-	// minTime = parseInt(minTime);
-	//console.log('timing is below:');
-	//console.log(maxTime, requestedTime);
+console.log('am i in search service');
+	var regexquery = {
+
+	}
+	
 	var query =	{
 					title: context.title,
 				}
 	var query2 = {
-		
-		// "timings": {
-		// 	$lte: maxTime
-		// }
 		"timings": {
-			//$gte: requestedTime,
 			$lte: maxTime
-		}
-	}
+		}}
 	var query3 = {
 
 		"timings": {
 			$gte: minTime
 		}}
+		console.log('why am i undefined',context.title);
+	// know that region is an array
+	var area = JSON.stringify(context.area).slice(1, -1);
+	if(area == 'North'){ 
+		var areaArray = region.North;
+	}
+	if(area == 'South'){
+		var areaArray = region.South;
+	}
+	if(area == 'East'){
+		var areaArray = region.East;
+	}
+	if(area == 'West'){
+		var areaArray = region.West;
+	}
+	if(area == 'Central'){
+		var areaArray = region.Central;
+	}
+	if(area == 'All'){
+		var areaArray = region.East.concat(region.North, region.South, region.West, region.Central);
+	}
+	console.log(area);
+	console.log(areaArray);
 
-		console.log(maxTime, minTime);
-	// 	//cinemaName: req.cinemaName
-	// }
-	//console.log('query below: ');
-	//console.log(query, query2, query3);
-
+	console.log(maxTime, minTime);
 	Movie.aggregate([
 				{$match: query },
-
+				{$match: {cinemaName:{$in: areaArray }}},
 				{$unwind: {
 							path: "$bookingLinks",
 							includeArrayIndex: 'link_index'
 				}},
-
 				{$unwind: {		
 								path: "$timings",
 								includeArrayIndex: 'timing_index'
 				}},
 				{$match: query2},
 				{$match: query3},
-				//{$sort: {"$timings": 1}}
-
-				{$project: 
-					{	title: 1,
+				{$project:{
+						title: 1,
 						timings: 1,
 						cinemaName: 1,
 						bookingLinks: 1,
@@ -91,24 +94,12 @@ exports.findTheNearestTime = function(context, callback){
 						difference: { $abs: {$subtract: [ "$timings", requestedTime]}}
 					}
 				},
-				{
-					$match: {compare: 0}
+				{$match: {compare: 0}
 				},
-				// 		difference: {$abs:
-				// 							{$subtract: ["$date", Date()
-				// 					}
-
-
-				
-				// }}
-				// ,
-				{
-					$sort: {difference: 1}
+				{$sort: {difference: 1}
 				},
-				{
-					$limit: 5
+				{$limit: 5
 				},
-			
 				{$group: 
 
 						{
@@ -117,24 +108,14 @@ exports.findTheNearestTime = function(context, callback){
 							timings : {$push: "$timings"},
 							bookingLinks :{ $push: "$bookingLinks"}
 						}
-				}
-
-
-
-			], function(err, result){
+				}], function(err, result){
 				if (err) return(err);
-
-				//var replyString = processTimings(req.title, result);
-				//console.log('results incoming');
-
-				//console.log(result);
-
-				//ar result = JSON.stringify(result)
-
 				return callback(null, result);
 			})
 
 }
+
+
 
 function processTimings(title, results) {
 	//results contain
