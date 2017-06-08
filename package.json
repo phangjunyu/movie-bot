@@ -1,16 +1,7 @@
 {
-  "name": "node-wit",
-  "version": "4.2.0",
-  "description": "Wit.ai Node.js SDK",
-  "keywords": [
-    "wit",
-    "wit.ai",
-    "bot",
-    "botengine",
-    "bots",
-    "nlp",
-    "automation"
-  ],
+  "name": "moviebot",
+  "version": "1.0.0",
+  "description": "moviebot",
   "main": "index.js",
   "scripts": {
     "test": "mocha ./tests/lib.js"
@@ -18,9 +9,16 @@
   "repository": "https://josephling87@bitbucket.org/josephling87/moviebot.git",
   "author": "phangjunyu",
   "dependencies": {
+    "async": "latest",
+    "body-parser": "^1.17.2",
+    "cheerio": "latest",
+    "express": "4.15.3",
     "isomorphic-fetch": "^2.2.1",
-    "uuid": "^3.0.0",
-    "express":"4.15.3"
+    "moment": "^2.18.1",
+    "mongoose": "^4.10.4",
+    "node-wit": "^4.2.0",
+    "request": "latest",
+    "uuid": "^3.0.0"
   },
   "engines": {
     "node": ">=4.0.0"
