@@ -32,9 +32,9 @@ mongoose.connect('mongodb://test12:12test@ds137261.mlab.com:37261/hunglinga12');
 
 function firstEntityValue(entities, entity){
   const val = entities && entities[entity] &&
-    Array.isArray(entities[entity]) &&
-    entities[entity].length > 0 &&
-    entities[entity][0].value;
+  Array.isArray(entities[entity]) &&
+  entities[entity].length > 0 &&
+  entities[entity][0].value;
   if (!val) {
     return null;
   }
@@ -106,11 +106,11 @@ const fbMessageCarouselCinemas = (id, title, results) => {
   console.log(results);
   results.forEach(function(result) {
     var element = {
+
         title: result._id,//cinema name,
         //subtitle: // cinema location,
         //item_url: productUrl,
         //image_url: // cinema logo
-
     };
 
     var buttonArray = [];
@@ -139,8 +139,9 @@ const fbMessageCarouselCinemas = (id, title, results) => {
  
   //send carousel message
   sendGenericMessage(id, elementArray, FB_PAGE_TOKEN, function(err, response) {
-    
-  }) 
+
+  })
+
 };
 
 
@@ -197,19 +198,15 @@ const actions = {
       //   {context.reset=true;}
       console.log('triple deal here: ', context.title);
       if(context.title && context.result && context.requestedTime) {
-
         var rec= recipientId;
         context.reset=true;
         var title = context.title;
         var cont = context.result;
         fbMessageCarouselCinemas(rec, title, JSON.parse(cont));
-        //filter message here, make sure that all the data required are filled in 
-        //2 if
-
         return
-      } 
+      }
         return fbMessage(recipientId, text)
-      
+
       .then(() => null)
       .catch((err) => {
         console.error(
@@ -256,6 +253,7 @@ const actions = {
           const area = firstEntityValue(entities, ' area');
           context.area = area;
 
+
           searchService.findTheNearestTime(context, function(err, result){
               if(err) {return console.log(err);}
               if(result == null){
@@ -266,7 +264,9 @@ const actions = {
               context.result = JSON.stringify(result);
               if(context.title && context.result && context.requestedTime&& context.location) {
                 context.reset = true;
+
               } 
+
               return resolve(context);
             }
          )
@@ -328,6 +328,7 @@ getTimeAndLocation({context, entities, input}){
   }
 
 
+
 };
 
 // Setting up our bot
@@ -352,7 +353,7 @@ app.use(bodyParser.json({ verify: verifyRequestSignature }));
 app.get('/webhook', (req, res) => {
   console.log('hello');
   if (req.query['hub.mode'] === 'subscribe' &&
-    req.query['hub.verify_token'] === FB_VERIFY_TOKEN) {
+  req.query['hub.verify_token'] === FB_VERIFY_TOKEN) {
     console.log("Validating webhook");
     res.status(200).send(req.query['hub.challenge']);
   } else {
@@ -364,7 +365,7 @@ app.get('/webhook', (req, res) => {
 // Message handler
 app.post('/webhook', (req, res) => {
   console.log('hello');
-    // Parse the Messenger payload
+  // Parse the Messenger payload
   // See the Webhook reference
   // https://developers.facebook.com/docs/messenger-platform/webhook-reference
   const data = req.body;
@@ -416,6 +417,7 @@ app.post('/webhook', (req, res) => {
               // This depends heavily on the business logic of your bot.
               // Example:
               if (context.reset){
+
               console.log('resetting context');
               delete context.title;
               delete context.result;
@@ -446,51 +448,82 @@ app.get('/scrape', function(req, res, next){
   async.waterfall([
     function startScraping(callback){
       console.log("url is ", url);
-      ams.getAllCinemas(url, function(err, movieList){
+      ams.getAllCinemas(url, function(err, movieList, dates){
         if (err) return callback(err);
-        return callback(null, movieList);
+        return callback(null, movieList, dates);
       })
     },
-    function gotListOfMovies(movieList, callback){
-      async.map(movieList, sms.getShowTimesByMovie, function(err, result){
-        if (err){
-          console.log(err)
-          return err;
+    function gotListOfMovies(movieList, dates, callback){
+      async.parallel([
+        function scrapeToday(callback){
+          //current date no need to increment
+          async.map(movieList, sms.getShowTimesByMovie, function(err, result){
+            if (err){
+              console.log(err)
+              return err;
+            }
+            return callback(null, result);
+          })
+        },
+        function scrapeTomorrow(callback){
+          var tomorrow = dates.tomorrow
+          for (var i = 0; i < movieList.length; i++){
+            movieList[i].dateScraped = tomorrow;
+          }
+          async.map(movieList, sms.getShowTimesByMovie, function(err, result){
+            if (err){
+              console.log(err)
+              return err;
+            }
+            return callback(null, result);
+          })
+        },
+        function scrapeDayAfter(callback){
+          var dayafter = dates.dayafter
+          for (var i = 0; i < movieList.length; i++){
+            movieList[i].dateScraped = dayafter;
+          }
+          async.map(movieList, sms.getShowTimesByMovie, function(err, result){
+            if (err){
+              console.log(err)
+              return err;
+            }
+            return callback(null, result);
+          })
         }
-        return callback(null, result);
+      ],  function(err, results){
+        if(err) return next(err);
+        return callback(null, results);
       });
     }
-  ], function saveToDatabase(err, result){
+  ], function saveToDatabase(err, results){
     if (err) return next(err);
-    var finalArray = []
-    //insertMany requires array to be inserted
-    for (var i = 0; i < result.length; i++){
-      finalArray = finalArray.concat(result[i]);
-    }
-    // console.log(finalArray);
+    results = [].concat.apply([],results);
+    results = [].concat.apply([],results);
+    //double flatten the results array so that it can be uploaded
     async.waterfall([
       function clearDataBase(callback){
         Movie.remove({}, function onDelete(err, docs) {
-        if (err) {
-          console.log("Couldn't delete! Error: ", err)
-          return callback(err);
-        } else {
-          console.info('database cleared!');
-          return callback(null);
-        }
-      })
-    },
-    function insertNewValues(callback){
-      Movie.insertMany(finalArray, function onInsert(err, docs) {
-      if (err) {
-        console.log("Couldn;t upload! Error: ", err)
-        return callback(err);
-      } else {
-        console.info('new values uploaded!');
-        return callback(null);
+          if (err) {
+            console.log("Couldn't delete! Error: ", err)
+            return callback(err);
+          } else {
+            console.info('database cleared!');
+            return callback(null);
+          }
+        })
+      },
+      function insertNewValues(callback){
+        Movie.insertMany(results, function onInsert(err, docs) {
+          if (err) {
+            console.log("Couldn;t upload! Error: ", err)
+            return callback(err);
+          } else {
+            console.info('new values uploaded!');
+            return callback(null);
+          }
+        })
       }
-    })
-  }
     ], function doneUploading(err, result){
       if (err) return next(err);
     })
@@ -500,13 +533,13 @@ app.get('/scrape', function(req, res, next){
 
 
 /*
- * Verify that the callback came from Facebook. Using the App Secret from
- * the App Dashboard, we can verify the signature that is sent with each
- * callback in the x-hub-signature field, located in the header.
- *
- * https://developers.facebook.com/docs/graph-api/webhooks#setup
- *
- */
+* Verify that the callback came from Facebook. Using the App Secret from
+* the App Dashboard, we can verify the signature that is sent with each
+* callback in the x-hub-signature field, located in the header.
+*
+* https://developers.facebook.com/docs/graph-api/webhooks#setup
+*
+*/
 
 function verifyRequestSignature(req, res, buf) {
   var signature = req.headers["x-hub-signature"];
@@ -521,8 +554,8 @@ function verifyRequestSignature(req, res, buf) {
     var signatureHash = elements[1];
 
     var expectedHash = crypto.createHmac('sha1', FB_APP_SECRET)
-                        .update(buf)
-                        .digest('hex');
+    .update(buf)
+    .digest('hex');
 
     if (signatureHash != expectedHash) {
       throw new Error("Couldn't validate the request signature.");
@@ -586,6 +619,7 @@ function sendLocationQuickReply(recipient, accessToken, callback){
 
 
 function sendGenericMessage(recipient, elements, accessToken, callback) {
+
     var messageData = {
         "attachment": {
             "type": "template",
@@ -614,7 +648,20 @@ function sendGenericMessage(recipient, elements, accessToken, callback) {
             return callback(null, response.body);
         }
     });
+
 }
 
 app.listen(PORT);
 console.log('Listening on :' + PORT + '...');
+
+
+// Just in case
+// function gotListOfMovies(movieList, callback){
+//   async.map(movieList, sms.getShowTimesByMovie, function(err, result){
+//     if (err){
+//       console.log(err)
+//       return err;
+//     }
+//     return callback(null, result);
+//   });
+// }

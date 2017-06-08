@@ -4,12 +4,14 @@ var request = require('request');
 var cheerio = require('cheerio');
 var moment = require('moment');
 var Movie = require('../models/Movie');
+var async = require('async');
 // var mongoose = require('mongoose');
 //find and update use upsert
 
 
 exports.getShowTimesByMovie = function(movieJson, callback){
-  var url = "http://www.insing.com/" + movieJson.movieURL + "showtimes/";
+  var urlDate = movieJson.dateScraped
+  var url = "http://www.insing.com/" + movieJson.movieURL + "showtimes/?d=" + urlDate;
   request(url, function(error, response, html){
     if(error){
       console.log('Error: ', error);
@@ -20,7 +22,6 @@ exports.getShowTimesByMovie = function(movieJson, callback){
     } else {
       var $ = cheerio.load(html);
       var allShowTimes = [];
-      var scrapedDate = $('.dates-panel').children().children().first().find('a').attr('data-date')
       $('.cinema-showtime').each(function(i,elem){
           var movie = new Movie();
           movie.title = movieJson.movieName;
@@ -31,32 +32,26 @@ exports.getShowTimesByMovie = function(movieJson, callback){
           data.find('.movie-showtimes').children().children().each(function(i, elem){
             var hourmin = $(this).find('a').text();
             hourmin = moment(hourmin, "HH:mm a").format("HHmm");
-            console.log(hourmin)
-            var finalDate = moment(scrapedDate+hourmin, 'YYYY-MM-DDHHmm')
-            console.log(finalDate)
-            // add function is to adjust the time difference...
-            // finalDate.add(8, 'hours');
-            // finalDate = finalDate.toDate();
-            // console.log(finalDate)
+            var finalDate = moment(urlDate+hourmin, 'YYYY-MM-DDHHmm')
             var bookingLink = $(this).find('a').attr('onclick');
             bookingLink = linkParser(bookingLink);
             bookingLinksByCinema.push(bookingLink);
             showTimeByCinema.push(finalDate);
           });
-          for(var x = 0; x < showTimeByCinema.length; x++){
+
           movie.cinemaName = cinemaName;
           movie.timings = showTimeByCinema;
           movie.bookingLinks = bookingLinksByCinema;
-          }
+
           allShowTimes.push(movie);
       })
     }
-    var jsonAllShowTimes = JSON.stringify(allShowTimes, null, 4);
+    // var jsonAllShowTimes = JSON.stringify(allShowTimes, null, 4);
     return callback(null, allShowTimes);
-  })
-}
+    })
+  }
 
 function linkParser(string){
   string = string.split('this.href=');
-  return string[1].replace('\'',"");
+  return string[1].replace(/\'/g,"");
 }
