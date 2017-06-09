@@ -28,8 +28,10 @@ const sms = require('./webscraper/singleMovieScraper');
 var region = require('./region');
 
 
-//mongoose.connect('mongodb://test12:12test@ds157621.mlab.com:57621/fbmess');
- mongoose.connect('mongodb://junyu_test:junyu123@ds161471.mlab.com:61471/movies');
+
+// mongoose.connect('mongodb://test12:12test@ds137261.mlab.com:37261/hunglinga12');
+mongoose.connect('mongodb://junyu_test:junyu123@ds161471.mlab.com:61471/movies');
+
 
 function firstEntityValue(entities, entity){
   const val = entities && entities[entity] &&
@@ -60,10 +62,15 @@ const PORT = process.env.PORT || 3000;
 const WIT_TOKEN = process.env.WIT_TOKEN || '2DOU3VRLIV27HARM4STH5ORTKVQ3LCDV';
 
 // Messenger API parameters
-const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAX94gbB7OIBAEBN8WfWjsdMGH5JD3WORXdY461UhWs5PGFdYhPajN431ivFPGGO7eZCM4nlH4tkuDI7HzdIiwN0xUvFUIA8ckKinM0JZAQkooLeZCqL8uowhZCHrAXxsZCr5xYy669jRruCuzQNpr3S1XYSZCqpY4gg6Or5QoPwZDZD';
-                                                    
+//const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAX94gbB7OIBAEBN8WfWjsdMGH5JD3WORXdY461UhWs5PGFdYhPajN431ivFPGGO7eZCM4nlH4tkuDI7HzdIiwN0xUvFUIA8ckKinM0JZAQkooLeZCqL8uowhZCHrAXxsZCr5xYy669jRruCuzQNpr3S1XYSZCqpY4gg6Or5QoPwZDZD';
+
+//for hotelbot
+const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAZA7FbmJywkBAFZBnRdHnARi2m2ZBnm800pK8H6khdqbx0ZC2c58MXvzrbtpqV8TAzEeLZCAzEfSlsqTTjjaZCre5h3e97FRVr1Oc1DgrYsXAZCEUIAzmJ0TOASyndnWm4BDFtfX8HO3ZAdRWOdOWPg6UZB3oZBFbW1vEukCMUqdIowZDZD';
+
 if (!FB_PAGE_TOKEN) { throw new Error('missing FB_PAGE_TOKEN') }
-const FB_APP_SECRET = process.env.FB_APP_SECRET || '84f1b7362715035cd132a3fd67ed4c5f';
+// const FB_APP_SECRET = process.env.FB_APP_SECRET || '84f1b7362715035cd132a3fd67ed4c5f';
+//for mymoviebot
+const FB_APP_SECRET = process.env.FB_APP_SECRET || '16b510b46fe3a12f91a42acb2ba5b2d4';
 if (!FB_APP_SECRET) { throw new Error('missing FB_APP_SECRET') }
 
 const FB_VERIFY_TOKEN = "VOUCHMOVIEBOT";
@@ -128,7 +135,8 @@ const fbMessageCarouselCinemas = (id, context) => {
     elementArray.push(element);
   })
   sendGenericMessage(id, elementArray, FB_PAGE_TOKEN, function(err, response) {
-
+    console.log("id is: ", id)
+    fbMessage(id, "Alrite, I've wiped my mind. What do you want now?");
   })
 
 };
@@ -188,6 +196,10 @@ const actions = {
         sendLocationQuickReply(recipientId, FB_PAGE_TOKEN, function(err, response){});
         return
       }
+      if(context.title && context.timings && context.area && context.missingResult){
+        sendResetQuickReply(recipientId, function(err, response){});
+        return
+      }
       if(context.title && context.result && context.timings && context.area) {
         fbMessageCarouselCinemas(recipientId ,context);
         return
@@ -210,6 +222,7 @@ const actions = {
   },
   getTimeAndLocation({context, entities, sessionId}){
     console.log('gettimeandlocation');
+    var recipientId = sessions[sessionId].fbid;
     context.reset = false;
     console.log(context);
     return new Promise((resolve, reject)=>{
@@ -237,9 +250,9 @@ const actions = {
       }
       if(context.title && context.timings && context.area){
         console.log('just before the search service', context);
-        var recipientId = sessions[sessionId].fbid;
         if (recipientId){
-          var searchText = "I'm se-se-se-se-searchinggggg!";
+          var formattedTime = moment(context.timings).format("dddd, hmma");
+          var searchText = "Currently trawling the seas for " + context.title + " at " + formattedTime + " at " + context.area + "...";
           fbMessage(recipientId, searchText);
         }
         searchService.findTheNearestTime(context,function(err, result){
@@ -251,41 +264,49 @@ const actions = {
             context.result = JSON.stringify(result);
             console.log(context);
           }
+          else context.missingResult = true;
           return resolve(context);
         })    }
         else
         return resolve(context);
       })
 
+    },
+    clearContext({context, entities, sessionId}){
+      var recipientId = sessions[sessionId].fbid;
+      return new Promise((resolve, reject)=>{
+        const reset = firstEntityValue(entities, 'reset');
+        if (reset){
+          context.reset = true;
+          fbMessage(recipientId, "Alrite, I've wiped my mind. What do you want now?");
+        }
+        return resolve(context);
+      })
     }
+}
 
+// Setting up our bot
+const wit = new Wit({
+  accessToken: WIT_TOKEN,
+  actions,
+  logger: new log.Logger(log.INFO)
+});
 
-
-
-
-  };
-
-  // Setting up our bot
-  const wit = new Wit({
-    accessToken: WIT_TOKEN,
-    actions,
-    logger: new log.Logger(log.INFO)
+// Starting our webserver and putting it all together
+const app = express();
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(({method, url}, rsp, next) => {
+  rsp.on('finish', () => {
+    console.log(`${rsp.statusCode} ${method} ${url}`);
   });
+  next();
+});
+app.use(bodyParser.json({ verify: verifyRequestSignature }));
 
-  // Starting our webserver and putting it all together
-  const app = express();
-  app.use(bodyParser.urlencoded({extended: true}));
-  app.use(({method, url}, rsp, next) => {
-    rsp.on('finish', () => {
-      console.log(`${rsp.statusCode} ${method} ${url}`);
-    });
-    next();
-  });
-  app.use(bodyParser.json({ verify: verifyRequestSignature }));
+app.get('/', (req, res) => {
+  res.sendStatus(200);
+});
 
-  app.get('/', (req, res) => {
-    res.sendStatus(200);
-  });
   // Webhook setup
   app.get('/webhook', (req, res) => {
     console.log('hello');
@@ -307,7 +328,7 @@ const actions = {
 
       imageLink
     })
-  })
+  });
 
   // Message handler
   app.post('/webhook', (req, res) => {
@@ -391,221 +412,228 @@ const actions = {
               // Let's reply with an automatic message
               fbMessage(sender, 'Sorry I can only process text messages for now.')
               .catch(console.error);
-            }
-            else if (text) {
-              // We received a text message
-              // Let's forward the message to the Wit.ai Bot Engine
-              // This will run all actions until our bot has nothing left to do
-              wit.runActions(
-                sessionId, // the user's current session
-                text, // the user's message
-                sessions[sessionId].context // the user's current session state
-              ).then((context) => {
-                // Our bot did everything it has to do.
-                // Now it's waiting for further messages to proceed.
-                console.log('Waiting for next user messages');
-                // Based on the session state, you might want to reset the session.
-                // This depends heavily on the business logic of your bot.
-                // Example:
-                if (context.reset){
-                  console.log('resetting context');
-                  delete context.title;
-                  delete context.result;
-                  delete context.timings;
-                  delete context.area;
-                }// Updating the user's current session state
-                sessions[sessionId].context = context;
-              })
-              .catch((err) => {
-                console.error('Oops! Got an error from Wit: ', err.stack || err);
-              })
-            }
           } else if (event.message.quick_reply) {
             console.log('got a quicky reply?');
 
           } else {
             console.log('received event', JSON.stringify(event));
-          }
-        });
-      });
-      res.sendStatus(200);
-    }
-  });
 
-  app.get('/scrape', function(req, res, next){
-    var url = 'http://www.insing.com/movies/';
-    async.waterfall([
-      function startScraping(callback){
-        console.log("url is ", url);
-        ams.getAllCinemas(url, function(err, movieList, dates){
-          if (err) return callback(err);
-          return callback(null, movieList, dates);
-        })
-      },
-      function gotListOfMovies(movieList, dates, callback){
-        async.parallel([
-          function scrapeToday(callback){
-            //current date no need to increment
-            async.map(movieList, sms.getShowTimesByMovie, function(err, result){
-              if (err){
-                console.log(err)
-                return err;
-              }
-              return callback(null, result);
-            })
-          },
-          function scrapeTomorrow(callback){
-            var tomorrow = dates.tomorrow
-            for (var i = 0; i < movieList.length; i++){
-              movieList[i].dateScraped = tomorrow;
-            }
-            async.map(movieList, sms.getShowTimesByMovie, function(err, result){
-              if (err){
-                console.log(err)
-                return err;
-              }
-              return callback(null, result);
-            })
-          },
-          function scrapeDayAfter(callback){
-            var dayafter = dates.dayafter
-            for (var i = 0; i < movieList.length; i++){
-              movieList[i].dateScraped = dayafter;
-            }
-            async.map(movieList, sms.getShowTimesByMovie, function(err, result){
-              if (err){
-                console.log(err)
-                return err;
-              }
-              return callback(null, result);
-            })
-          }
-        ],  function(err, results){
-          if(err) return next(err);
-          return callback(null, results);
-        });
-      }
-    ], function saveToDatabase(err, results){
-      if (err) return next(err);
-      results = [].concat.apply([],results);
-      results = [].concat.apply([],results);
-      //double flatten the results array so that it can be uploaded
-      async.waterfall([
-        function clearDataBase(callback){
-          Movie.remove({}, function onDelete(err, docs) {
-            if (err) {
-              console.log("Couldn't delete! Error: ", err)
-              return callback(err);
-            } else {
-              console.info('database cleared!');
-              return callback(null);
-            }
-          })
-        },
-        function insertNewValues(callback){
-          Movie.insertMany(results, function onInsert(err, docs) {
-            if (err) {
-              console.log("Couldn;t upload! Error: ", err)
-              return callback(err);
-            } else {
-              console.info('new values uploaded!');
-              return callback(null);
-            }
-          })
-        }
-      ], function doneUploading(err, result){
-        if (err) return next(err);
-      })
-    })
+       }
+      };
+    });
     res.sendStatus(200);
-  })
-
-
-  /*
-  * Verify that the callback came from Facebook. Using the App Secret from
-  * the App Dashboard, we can verify the signature that is sent with each
-  * callback in the x-hub-signature field, located in the header.
-  *
-  * https://developers.facebook.com/docs/graph-api/webhooks#setup
-  *
-  */
-
-  function verifyRequestSignature(req, res, buf) {
-    var signature = req.headers["x-hub-signature"];
-
-    if (!signature) {
-      // For testing, let's log an error. In production, you should throw an
-      // error.
-      console.error("Couldn't validate the signature.");
-    } else {
-      var elements = signature.split('=');
-      var method = elements[0];
-      var signatureHash = elements[1];
-
-      var expectedHash = crypto.createHmac('sha1', FB_APP_SECRET)
-      .update(buf)
-      .digest('hex');
-
-      if (signatureHash != expectedHash) {
-        throw new Error("Couldn't validate the request signature.");
-      }
-    }
+  });
   }
 
-function sendLocationQuickReply(recipient, accessToken, callback){
-    //triggered to give 5 buttons
-    var messData = {
-      "text":"Either tell me the cinema name or tap an area below!",
-      "quick_replies":[
-        {"content_type":"text",
-        "title":"North",
-        "payload":"North"
+})
+
+app.get('/scrape', function(req, res, next){
+  var url = 'http://www.insing.com/movies/';
+  async.waterfall([
+    function startScraping(callback){
+      console.log("url is ", url);
+      ams.getAllCinemas(url, function(err, movieList, dates){
+        if (err) return callback(err);
+        return callback(null, movieList, dates);
+      })
+    },
+    function gotListOfMovies(movieList, dates, callback){
+      async.parallel([
+        function scrapeToday(callback){
+          //current date no need to increment
+          async.map(movieList, sms.getShowTimesByMovie, function(err, result){
+            if (err){
+              console.log(err)
+              return err;
+            }
+            return callback(null, result);
+          })
         },
-        {"content_type":"text",
-         "title":"West",
-         "payload":"West"
-        },
-        {"content_type":"text",
-         "title": "East",
-         "payload": "East"
-        },
-        {"content_type": "text",
-         "title": "South",
-         "payload": "South"
-        },
-        {"content_type":"text",
-        "title": "Central",
-        "payload": "Central"
-        },
-        {"content_type": "text",
-        "title": "All",
-        "payload": "All"
-        }]}
-        console.log('The mess data is: ', messData, recipient);
-        var messageData = messData;
-        request({
-          url:'https://graph.facebook.com/me/messages?',
-          qs: { access_token: accessToken },
-          method: 'POST',
-          json: {
-            recipient: { id: recipient },
-            message: messageData,
+        function scrapeTomorrow(callback){
+          var tomorrow = dates.tomorrow
+          for (var i = 0; i < movieList.length; i++){
+            movieList[i].dateScraped = tomorrow;
           }
-        }, function(error, response, body){
-          if (error){
-            console.log("error sending quick reply", error);
-            return callback(err, null);
-          }else if(response.body.error){
-            console.log('error: ', response.body.error);
-            return callback(response.body.error, null);
-          } else {
-            console.log('the response is: ',response.body);
-            return callback(null, response.body);
+          async.map(movieList, sms.getShowTimesByMovie, function(err, result){
+            if (err){
+              console.log(err)
+              return err;
+            }
+            return callback(null, result);
+          })
+        },
+        function scrapeDayAfter(callback){
+          var dayafter = dates.dayafter
+          for (var i = 0; i < movieList.length; i++){
+            movieList[i].dateScraped = dayafter;
           }
+          async.map(movieList, sms.getShowTimesByMovie, function(err, result){
+            if (err){
+              console.log(err)
+              return err;
+            }
+            return callback(null, result);
+          })
         }
-      );
+      ],  function(err, results){
+        if(err) return next(err);
+        return callback(null, results);
+      });
+    }
+  ], function saveToDatabase(err, results){
+    if (err) return next(err);
+    results = [].concat.apply([],results);
+    results = [].concat.apply([],results);
+    //double flatten the results array so that it can be uploaded
+    async.waterfall([
+      function clearDataBase(callback){
+        Movie.remove({}, function onDelete(err, docs) {
+          if (err) {
+            console.log("Couldn't delete! Error: ", err)
+            return callback(err);
+          } else {
+            console.info('database cleared!');
+            return callback(null);
+          }
+        })
+      },
+      function insertNewValues(callback){
+        Movie.insertMany(results, function onInsert(err, docs) {
+          if (err) {
+            console.log("Couldn;t upload! Error: ", err)
+            return callback(err);
+          } else {
+            console.info('new values uploaded!');
+            return callback(null);
+          }
+        })
+      }
+    ], function doneUploading(err, result){
+      if (err) return next(err);
+    })
+  })
+  res.sendStatus(200);
+})
+
+
+/*
+* Verify that the callback came from Facebook. Using the App Secret from
+* the App Dashboard, we can verify the signature that is sent with each
+* callback in the x-hub-signature field, located in the header.
+*
+* https://developers.facebook.com/docs/graph-api/webhooks#setup
+*
+*/
+
+function verifyRequestSignature(req, res, buf) {
+  var signature = req.headers["x-hub-signature"];
+
+  if (!signature) {
+    // For testing, let's log an error. In production, you should throw an
+    // error.
+    console.error("Couldn't validate the signature.");
+  } else {
+    var elements = signature.split('=');
+    var method = elements[0];
+    var signatureHash = elements[1];
+
+    var expectedHash = crypto.createHmac('sha1', FB_APP_SECRET)
+    .update(buf)
+    .digest('hex');
+
+    if (signatureHash != expectedHash) {
+      throw new Error("Couldn't validate the request signature.");
+    }
+  }
 }
 
+function sendLocationQuickReply(recipient, accessToken, callback){
+  //triggered to give 5 buttons
+  var messData = {
+    "text":"Either tell me the cinema name or tap an area below!",
+    "quick_replies":[
+      {"content_type":"text",
+      "title":"North",
+      "payload":"North"
+    },
+    {"content_type":"text",
+    "title":"West",
+    "payload":"West"
+  },
+  {"content_type":"text",
+  "title": "East",
+  "payload": "East"
+},
+{"content_type": "text",
+"title": "South",
+"payload": "South"
+},
+{"content_type":"text",
+"title": "Central",
+"payload": "Central"
+},
+{"content_type": "text",
+"title": "All",
+"payload": "All"
+}]}
+console.log('The mess data is: ', messData, recipient);
+var messageData = messData;
+request({
+  url:'https://graph.facebook.com/me/messages?',
+  qs: { access_token: accessToken },
+  method: 'POST',
+  json: {
+    recipient: { id: recipient },
+    message: messageData,
+  }
+}, function(error, response, body){
+  if (error){
+    console.log("error sending quick reply", error);
+    return callback(err, null);
+  }else if(response.body.error){
+    console.log('error: ', response.body.error);
+    return callback(response.body.error, null);
+  } else {
+    console.log('the response is: ',response.body);
+    return callback(null, response.body);
+  }
+}
+);
+}
+
+function sendResetQuickReply(recipient, callback){
+  var messData = {
+    "text":" I'm sorry. There are no other showings within half an hour of the timing you gave! Either change one of the parameters or press Reset to start a new search!",
+    "quick_replies":[
+      {"content_type":"text",
+      "title":"Reset",
+      "payload":"Reset"
+    }]
+  }
+  console.log('The mess data is: ', messData, recipient);
+  var messageData = messData;
+  request({
+    url:'https://graph.facebook.com/me/messages?',
+    qs: { access_token: FB_PAGE_TOKEN },
+    method: 'POST',
+    json: {
+      recipient: { id: recipient },
+      message: messageData,
+    }
+  }, function(error, response, body){
+    if (error){
+      console.log("error sending quick reply", error);
+      return callback(err, null);
+    }else if(response.body.error){
+      console.log('error: ', response.body.error);
+      return callback(response.body.error, null);
+    } else {
+      console.log('the response is: ',response.body);
+      return callback(null, response.body);
+    }
+  }
+);
+}
 
 function sendGenericMessage(recipient, elements, accessToken, callback) {
 
@@ -644,4 +672,8 @@ function sendGenericMessage(recipient, elements, accessToken, callback) {
 //   .get(cronjob.beginCronjob)
 
 app.listen(PORT);
+
 console.log('Listening on :' + PORT + '...');
+
+
+

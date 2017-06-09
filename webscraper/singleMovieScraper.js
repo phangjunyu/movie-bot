@@ -24,6 +24,7 @@ exports.getShowTimesByMovie = function(movieJson, callback){
       var allShowTimes = [];
       $('.cinema-showtime').each(function(i,elem){
           var movie = new Movie();
+          // movie.imageLink = movieJson.imageLink
           movie.title = movieJson.movieName;
           movie.inSingID = movieJson.movieID;
           var data = $(this);

@@ -17,10 +17,13 @@ exports.getAllCinemas = function(url, callback) {
     }
     $('.movie-slideshow').children('.list-unstyled').children('li[class=item]').each(function(){
       var data = $(this).children('.entry').children().find('a');
+      // var imageLink = $(this).children('.thumbnail').find('img').attr('src');
+      // console.log("imageLink is: " + imageLink);
       var movieURL = data.attr('href');
       var movieID = idParser(movieURL);
       var movie = {
         movieName: data.text(),
+        // imageLink: imageLink,
         movieURL: movieURL,
         movieID: movieID,
         dateScraped: dateToday

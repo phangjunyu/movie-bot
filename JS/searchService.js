@@ -21,8 +21,6 @@ exports.findQuery = function(movie, showTime, callback){
   })}
 
 
-
-
 exports.findTheNearestTime = function(context, callback){
 	var requestedTime = moment(context.timings).toDate();
 	var maxTime = moment(context.timings).add(30, 'minutes').toDate();
@@ -94,8 +92,7 @@ exports.findTheNearestTime = function(context, callback){
 	  },
 	  {$sort: {difference: 1}
 	},
-	{$limit: 5
-	},
+	// {$limit: 5},
 	{$group:{
 	    _id: "$cinemaName",
 	    title: {$first: '$title'},
@@ -107,6 +104,7 @@ exports.findTheNearestTime = function(context, callback){
 	  return callback(null, result);
 	})
 }
+
 
 
 exports.NowShowing = function(recipient, callback){
@@ -133,8 +131,6 @@ exports.NowShowing = function(recipient, callback){
 			//this here shoule return an array of movie names
 		})
 }
-
-
 
 
 
