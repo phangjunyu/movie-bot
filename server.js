@@ -233,11 +233,13 @@ const actions = {
       //Final successful search
 
       if(context.title && context.result && context.timings && context.area) {
+          fbMessage(recipientId, "ARRRR ME HEARTY", function(err, response){})
          fbMessageCarouselCinemas(recipientId ,context)
          return Promise.resolve(context)
       }
       //Unsuccessful search
       if(context.title && context.timings && context.area && context.missingResult){
+        fbMessage(recipientId, "Shiver me timbers!", function(err, response){})
         sendResetQuickReply(recipientId, function(err, response){})
         return Promise.resolve(context)
       }
