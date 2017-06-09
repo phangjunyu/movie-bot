@@ -2,12 +2,10 @@
   "name": "moviebot",
   "version": "1.0.0",
   "description": "moviebot",
-  "main": "index.js",
+  "private": true,
   "scripts": {
     "test": "mocha ./tests/lib.js"
   },
-  "repository": "https://josephling87@bitbucket.org/josephling87/moviebot.git",
-  "author": "phangjunyu",
   "dependencies": {
     "async": "latest",
     "body-parser": "^1.17.2",
@@ -20,9 +18,6 @@
     "request": "latest",
     "uuid": "^3.0.0",
     "node-cron": "~1.1.1"
-  },
-  "engines": {
-    "node": ">=4.0.0"
   },
   "devDependencies": {
     "babel-cli": "^6.16.0",

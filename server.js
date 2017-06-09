@@ -19,15 +19,14 @@ const express = require('express');
 const fetch = require('node-fetch');
 const request = require('request');
 const moment = require('moment');
-const searchService = require('./searchService');
+const searchService = require('./JS/searchService');
 const mongoose = require('mongoose');
 const async = require('async');
-const Movie = require('../models/Movie');
-const ams = require('../webscraper/allMoviesScraper');
-const sms = require('../webscraper/singleMovieScraper');
-var region = require('../region');
-var cron = require('node-cron');
-var cronjob = require('./cronjob');
+const Movie = require('./models/Movie');
+const ams = require('./webscraper/allMoviesScraper');
+const sms = require('./webscraper/singleMovieScraper');
+var region = require('./region');
+
 
 mongoose.connect('mongodb://test12:12test@ds137261.mlab.com:37261/hunglinga12');
 // mongoose.connect('mongodb://junyu_test:junyu123@ds161471.mlab.com:61471/movies');
@@ -47,15 +46,15 @@ let Wit = null;
 let log = null;
 try {
   // if running from repo
-  Wit = require('../').Wit;
-  log = require('../').log;
+  Wit = require('./').Wit;
+  log = require('./').log;
 } catch (e) {
   Wit = require('node-wit').Wit;
   log = require('node-wit').log;
 }
 
 // Webserver parameter
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 
 // Wit.ai parameters
 const WIT_TOKEN = process.env.WIT_TOKEN || '2DOU3VRLIV27HARM4STH5ORTKVQ3LCDV';
@@ -275,6 +274,9 @@ const actions = {
   });
   app.use(bodyParser.json({ verify: verifyRequestSignature }));
 
+  app.get('/', (req, res) => {
+    res.sendStatus(200);
+  });
   // Webhook setup
   app.get('/webhook', (req, res) => {
     console.log('hello');
