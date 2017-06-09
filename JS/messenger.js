@@ -19,17 +19,18 @@ const express = require('express');
 const fetch = require('node-fetch');
 const request = require('request');
 const moment = require('moment');
-const searchService = require('./JS/searchService');
+const searchService = require('./searchService');
 const mongoose = require('mongoose');
 const async = require('async');
-const Movie = require('./models/Movie');
-const ams = require('./webscraper/allMoviesScraper');
-const sms = require('./webscraper/singleMovieScraper');
-var region = require('./region');
+const Movie = require('../models/Movie');
+const ams = require('../webscraper/allMoviesScraper');
+const sms = require('../webscraper/singleMovieScraper');
+var region = require('../region');
+var cron = require('node-cron');
+var cronjob = require('./cronjob');
 
-
-//mongoose.connect('mongodb://test12:12test@ds157621.mlab.com:57621/fbmess');
- mongoose.connect('mongodb://junyu_test:junyu123@ds161471.mlab.com:61471/movies');
+mongoose.connect('mongodb://test12:12test@ds137261.mlab.com:37261/hunglinga12');
+// mongoose.connect('mongodb://junyu_test:junyu123@ds161471.mlab.com:61471/movies');
 
 function firstEntityValue(entities, entity){
   const val = entities && entities[entity] &&
@@ -46,15 +47,15 @@ let Wit = null;
 let log = null;
 try {
   // if running from repo
-  Wit = require('./').Wit;
-  log = require('./').log;
+  Wit = require('../').Wit;
+  log = require('../').log;
 } catch (e) {
   Wit = require('node-wit').Wit;
   log = require('node-wit').log;
 }
 
 // Webserver parameter
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 // Wit.ai parameters
 const WIT_TOKEN = process.env.WIT_TOKEN || '2DOU3VRLIV27HARM4STH5ORTKVQ3LCDV';
@@ -167,22 +168,18 @@ const actions = {
     // console.log(JSON.stringify(request));
     var sessionId = request.sessionId;
     var text = response.text;
-    //console.log("response text is: ", text)
+    console.log("response text is: ", text)
     var context = request.context;
-    //console.log('send function context: ', request.context);
+    console.log('send function context: ', request.context);
     // Our bot has something to say!
     // Let's retrieve the Facebook user whose session belongs to
     const recipientId = sessions[sessionId].fbid;
-    //console.log('the real id is: ', recipientId);
+    console.log('the real id is: ', recipientId);
     if (recipientId) {
       // Yay, we found our recipient!
       // Let's forward our bot response to her.
       // We return a promise to let our bot know when we're done sending
       //console.log('<><><><>', JSON.stringify(context));
-      if(context.resetID == 'Y'){
-        var reply = "DONE!";
-        fbMessage(recipientId, reply );
-        return}
       if(context.title && !context.area){
         console.log('am i in the onwofnofowefb', recipientId);
         sendLocationQuickReply(recipientId, FB_PAGE_TOKEN, function(err, response){});
@@ -215,18 +212,18 @@ const actions = {
     return new Promise((resolve, reject)=>{
       const movie = firstEntityValue(entities, 'search_query');
       if (movie){
-        console.log('setting title', movie);
+        console.log('setting title')
         context.title = movie;
-      } 
+      }
       const cinemaLocation = firstEntityValue(entities, 'cinema_location')
       console.log('firstEntityValue cinema_location gives: ',cinemaLocation)
       if(cinemaLocation){
-        console.log('setting area', cinemaLocation);
+        console.log('setting area')
         context.area = cinemaLocation;
       }
       const datetime = firstEntityValue(entities, 'datetime');
       if(datetime){
-        console.log('setting timings', datetime);
+        console.log('setting timings')
         context.timings = datetime;
       }
       var area = firstEntityValue(entities, 'area');
@@ -239,17 +236,14 @@ const actions = {
         console.log('just before the search service', context);
         var recipientId = sessions[sessionId].fbid;
         if (recipientId){
-          var searchText = "I'm se-se-se-se-searchinggggg!";
+          var searchText = "I'm se-se-se-se-searchinggggg for ${context.title} at ${context.area} at ${context.timings}!";
           fbMessage(recipientId, searchText);
         }
         searchService.findTheNearestTime(context,function(err, result){
           if(err) {return console.log(err);}
           if (result.length > 0){
             context.reset = true;
-            console.log('woufbowuefbujw', context);
-              if(context.reset == true){delete context.title; delete context.timings; delete context.cinemaLocation; delete context.area}
             context.result = JSON.stringify(result);
-            console.log(context);
           }
           return resolve(context);
         })    }
@@ -258,8 +252,6 @@ const actions = {
       })
 
     }
-
-
 
 
 
@@ -283,9 +275,6 @@ const actions = {
   });
   app.use(bodyParser.json({ verify: verifyRequestSignature }));
 
-  app.get('/', (req, res) => {
-    res.sendStatus(200);
-  });
   // Webhook setup
   app.get('/webhook', (req, res) => {
     console.log('hello');
@@ -299,16 +288,6 @@ const actions = {
     }
   });
 
-  app.get('/m', function(req, res, next) {
-    Movie.find({}).distinct('title').exec(function(err, movieNameArray) {
-      console.log('test');
-      if(err) return next(err);
-      return res.json(movieNameArray);
-
-      imageLink
-    })
-  })
-
   // Message handler
   app.post('/webhook', (req, res) => {
     console.log('hello');
@@ -317,69 +296,22 @@ const actions = {
     // https://developers.facebook.com/docs/messenger-platform/webhook-reference
     const data = req.body;
     //context.reset = true;
+    console.log(data);
     if (data.object === 'page') {
       data.entry.forEach(entry => {
         entry.messaging.forEach(event => {
-          console.log(event);
-            //just for event postback
-
-            if(event.postback)
-            { console.log('am i even in here');
-                switch(event.postback.payload){
-
-                  case 'GET_STARTED_PAYLOAD':
-                      console.log('yay get started recieved');
-                      break;
-                  case 'NOW_SHOWING':
-                      console.log('requested for now showing movies');
-                      var recipientId = event.sender.id;
-                      var sessId = findOrCreateSession(senId);
-                      summonTheCarousels(recipientId);                     
-                      break;
-                  case 'RESET':
-                  console.log('RESET BUTTON CLICKED, relaying to context reset');
-
-                      var senId = event.sender.id;
-                      var sessId = findOrCreateSession(senId);
-                      var text = 'Reset';
-                      sessions[sessId].context.resetID = "Y";
-                      wit.runActions(
-                                sessId, // the user's current session
-                                text, // the user's message
-                                sessions[sessId].context // the user's current session state
-                              ).then((context) => {
-                                  console.log('resetting context', context);
-                                  context.reset = true;
-                                  if(context.reset ==true){
-                                    for(var value in context)
-                                      delete context[value];
-                                    console.log('owuebfuwebfouewbf', context);
-                                  }
-                                sessions[sessId].context = context;
-                              })
-                              .catch((err) => {
-                                console.error('Oops! Got an error from Wit: ', err.stack || err);
-                              });
-
-                      console.log('RESET BUTTON CLICKED, relaying to context reset');
-
-                      break;
-                  case 'SEARCH_MOVIE':
-                      console.log('SEARCH MOVIE BUTTON CLICKED');
-                      break;
-                  case 'SEARCH_LOCATION':
-                      console.log('SEARCH LOCATION BUTTON CLICKED');
-                      break;
-                  case 'SEARCH_TIMINGS':
-                      console.log('SEARCH TIMINGS BUTTON CLICKED');
-                }   
-            }
-
-          else if (event.message && !event.message.is_echo) {
+          // console.log(event);
+          // if(event.postback && event.postback.payload == 'GET_STARTED_PAYLOAD'){
+          //     return console.log('yay get started received');
+          // }
+          // console.log('just before suarch movie', event);
+          // if(event.postback && event.postback.payload =='SEARCH_MOVIE'){
+          //   return console.log('hello thererowoWBFEOEBW');
+          // }
+          if (event.message && !event.message.is_echo) {
             // Yay! We got a new message!
             // We retrieve the Facebook user ID of the sender
             const sender = event.sender.id;
-            console.log(event);
             // We retrieve the user's current session, or create one if it doesn't exist
             // This is needed for our bot to figure out the conversation history
             const sessionId = findOrCreateSession(sender);
@@ -420,10 +352,7 @@ const actions = {
                 console.error('Oops! Got an error from Wit: ', err.stack || err);
               })
             }
-          } else if (event.message.quick_reply) {
-            console.log('got a quicky reply?');
-
-          } else {
+          }  else {
             console.log('received event', JSON.stringify(event));
           }
         });

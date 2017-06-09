@@ -21,6 +21,8 @@ exports.findQuery = function(movie, showTime, callback){
   })}
 
 
+
+
 exports.findTheNearestTime = function(context, callback){
 	var requestedTime = moment(context.timings).toDate();
 	var maxTime = moment(context.timings).add(30, 'minutes').toDate();
@@ -105,3 +107,34 @@ exports.findTheNearestTime = function(context, callback){
 	  return callback(null, result);
 	})
 }
+
+
+exports.NowShowing = function(recipient, callback){
+	var recipientId = recipient;
+	var query = {};
+
+	Movie.aggregate([
+			{$match: query},
+			{$group: 
+				{	_id : null,
+					title: "$title",
+					//image url here
+				}
+			},
+			{$project:
+				{
+					title:1
+				}
+			}
+
+		], function(err, result){
+			if(err) return(err);
+			return callback(null, result);
+			//this here shoule return an array of movie names
+		})
+}
+
+
+
+
+
