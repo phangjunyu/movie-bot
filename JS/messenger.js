@@ -26,6 +26,8 @@ const Movie = require('../models/Movie');
 const ams = require('../webscraper/allMoviesScraper');
 const sms = require('../webscraper/singleMovieScraper');
 var region = require('../region');
+var cron = require('node-cron');
+var cronjob = require('./cronjob');
 
 mongoose.connect('mongodb://test12:12test@ds137261.mlab.com:37261/hunglinga12');
 // mongoose.connect('mongodb://junyu_test:junyu123@ds161471.mlab.com:61471/movies');
@@ -59,10 +61,10 @@ const PORT = process.env.PORT || 5000;
 const WIT_TOKEN = process.env.WIT_TOKEN || '2DOU3VRLIV27HARM4STH5ORTKVQ3LCDV';
 
 // Messenger API parameters
-const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAZA7FbmJywkBAAdF0FCtEsawKna1HImMbxHXqByypwSY6yyDnnALT5GI0aatIHJLfYWZC6a7OcLdUsgkCgXAPZBYbtrIgOvPjiAZAQwfIZAwXq4jd8H5BJltAhar59Mm8ccG2e4nXIAVlAV9oHZCtV5md1hPtb7FOEr0UEITa6wZDZD';
-
+const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAX94gbB7OIBAEBN8WfWjsdMGH5JD3WORXdY461UhWs5PGFdYhPajN431ivFPGGO7eZCM4nlH4tkuDI7HzdIiwN0xUvFUIA8ckKinM0JZAQkooLeZCqL8uowhZCHrAXxsZCr5xYy669jRruCuzQNpr3S1XYSZCqpY4gg6Or5QoPwZDZD';
+                                                    
 if (!FB_PAGE_TOKEN) { throw new Error('missing FB_PAGE_TOKEN') }
-const FB_APP_SECRET = process.env.FB_APP_SECRET || '16b510b46fe3a12f91a42acb2ba5b2d4';
+const FB_APP_SECRET = process.env.FB_APP_SECRET || '84f1b7362715035cd132a3fd67ed4c5f';
 if (!FB_APP_SECRET) { throw new Error('missing FB_APP_SECRET') }
 
 const FB_VERIFY_TOKEN = "VOUCHMOVIEBOT";
@@ -102,27 +104,17 @@ const fbMessage = (id, text) => {
 const fbMessageCarouselCinemas = (id, context) => {
   //process result
   var elementArray = [];
-  //console.log(results);
-
   var results = JSON.parse(context.result)
   results.forEach(function(result) {
     var element = {
-
-      title: result._id,//cinema name,
-      subtitle: result.title,
-      // cinema location,
-      //item_url: productUrl,
-      //image_url: // cinema logo
+      title: result._id,
+      subtitle: result.title
     };
 
     var buttonArray = [];
     var timings = result.timings;
-    // console.log(timings);
-    // console.log(result);
     var bookingLinks = result.bookingLinks
-    // console.log(bookingLinks);
     timings.forEach(function(timing, index) {
-      //console.log(timing);
       var timing = moment(timing).format('HH:mm');
       var button = {
         "type": "web_url",
@@ -136,10 +128,6 @@ const fbMessageCarouselCinemas = (id, context) => {
     element.buttons = buttonArray;
     elementArray.push(element);
   })
-
-  //console.log(elementArray);
-
-  //send carousel message
   sendGenericMessage(id, elementArray, FB_PAGE_TOKEN, function(err, response) {
 
   })
@@ -197,18 +185,11 @@ const actions = {
         sendLocationQuickReply(recipientId, FB_PAGE_TOKEN, function(err, response){});
         return
       }
-      // if(context.title && (context.result == '[]') && context.timings && context.area) {
-      //   text = "I'm sorry. There are no results for that timing! Please enter another timing"
-      //   return fbMessage(recipientId, text)
-      // }
-
       if(context.title && context.result && context.timings && context.area) {
         fbMessageCarouselCinemas(recipientId ,context);
         return
       }
-
       return fbMessage(recipientId, text)
-
       .then(() => null)
       .catch((err) => {
         console.error(
@@ -259,9 +240,7 @@ const actions = {
           fbMessage(recipientId, searchText);
         }
         searchService.findTheNearestTime(context,function(err, result){
-          // console.log('search results return',result);
           if(err) {return console.log(err);}
-          //reset true since all params have been given
           if (result.length > 0){
             context.reset = true;
             context.result = JSON.stringify(result);
@@ -320,43 +299,35 @@ const actions = {
     if (data.object === 'page') {
       data.entry.forEach(entry => {
         entry.messaging.forEach(event => {
+          if(event.postback.payload == 'GET_STARTED_PAYLOAD'){
+              return console.log('yay get started received');
+          }
           if (event.message && !event.message.is_echo) {
             // Yay! We got a new message!
             // We retrieve the Facebook user ID of the sender
-
-
             const sender = event.sender.id;
             console.log(event);
-
             // We retrieve the user's current session, or create one if it doesn't exist
             // This is needed for our bot to figure out the conversation history
             const sessionId = findOrCreateSession(sender);
-
             // We retrieve the message content
             const {text, attachments} = event.message;
-
-
+            console.log('the event is: ', event, event.message);
             if (attachments) {
               // We received an attachment
               // Let's reply with an automatic message
               fbMessage(sender, 'Sorry I can only process text messages for now.')
               .catch(console.error);
             }
-
-
             else if (text) {
               // We received a text message
-
               // Let's forward the message to the Wit.ai Bot Engine
               // This will run all actions until our bot has nothing left to do
-              console.log('before running actions');
               wit.runActions(
                 sessionId, // the user's current session
                 text, // the user's message
                 sessions[sessionId].context // the user's current session state
               ).then((context) => {
-
-
                 // Our bot did everything it has to do.
                 // Now it's waiting for further messages to proceed.
                 console.log('Waiting for next user messages');
@@ -364,15 +335,12 @@ const actions = {
                 // This depends heavily on the business logic of your bot.
                 // Example:
                 if (context.reset){
-
                   console.log('resetting context');
                   delete context.title;
                   delete context.result;
                   delete context.timings;
                   delete context.area;
-                }
-
-                // Updating the user's current session state
+                }// Updating the user's current session state
                 sessions[sessionId].context = context;
               })
               .catch((err) => {
@@ -510,7 +478,7 @@ const actions = {
     }
   }
 
-  function sendLocationQuickReply(recipient, accessToken, callback){
+function sendLocationQuickReply(recipient, accessToken, callback){
     //triggered to give 5 buttons
     var messData = {
       "text":"Either tell me the cinema name or tap an area below!",
@@ -518,50 +486,50 @@ const actions = {
         {"content_type":"text",
         "title":"North",
         "payload":"North"
-      },
-      {"content_type":"text",
-      "title":"West",
-      "payload":"West"
-    },
-    {"content_type":"text",
-    "title": "East",
-    "payload": "East"
-  },
-  {"content_type": "text",
-  "title": "South",
-  "payload": "South"
-},
-{"content_type":"text",
-"title": "Central",
-"payload": "Central"
-},
-{"content_type": "text",
-"title": "All",
-"payload": "All"
-}]}
-console.log('The mess data is: ', messData, recipient);
-var messageData = messData;
-request({
-  url:'https://graph.facebook.com/me/messages?',
-  qs: { access_token: accessToken },
-  method: 'POST',
-  json: {
-    recipient: { id: recipient },
-    message: messageData,
-  }
-}, function(error, response, body){
-  if (error){
-    console.log("error sending quick reply", error);
-    return callback(err, null);
-  }else if(response.body.error){
-    console.log('error: ', response.body.error);
-    return callback(response.body.error, null);
-  } else {
-    console.log('the response is: ',response.body);
-    return callback(null, response.body);
-  }
-}
-);
+        },
+        {"content_type":"text",
+         "title":"West",
+         "payload":"West"
+        },
+        {"content_type":"text",
+         "title": "East",
+         "payload": "East"
+        },
+        {"content_type": "text",
+         "title": "South",
+         "payload": "South"
+        },
+        {"content_type":"text",
+        "title": "Central",
+        "payload": "Central"
+        },
+        {"content_type": "text",
+        "title": "All",
+        "payload": "All"
+        }]}
+        console.log('The mess data is: ', messData, recipient);
+        var messageData = messData;
+        request({
+          url:'https://graph.facebook.com/me/messages?',
+          qs: { access_token: accessToken },
+          method: 'POST',
+          json: {
+            recipient: { id: recipient },
+            message: messageData,
+          }
+        }, function(error, response, body){
+          if (error){
+            console.log("error sending quick reply", error);
+            return callback(err, null);
+          }else if(response.body.error){
+            console.log('error: ', response.body.error);
+            return callback(response.body.error, null);
+          } else {
+            console.log('the response is: ',response.body);
+            return callback(null, response.body);
+          }
+        }
+      );
 }
 
 
@@ -597,6 +565,9 @@ function sendGenericMessage(recipient, elements, accessToken, callback) {
   });
 
 }
+
+// router.route('/startCronjob')
+//   .get(cronjob.beginCronjob)
 
 app.listen(PORT);
 console.log('Listening on :' + PORT + '...');
