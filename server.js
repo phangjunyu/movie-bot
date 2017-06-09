@@ -22,10 +22,10 @@ const moment = require('moment');
 const searchService = require('./JS/searchService');
 const mongoose = require('mongoose');
 const async = require('async');
-const Movie = require('../models/Movie');
-const ams = require('../webscraper/allMoviesScraper');
-const sms = require('../webscraper/singleMovieScraper');
-var region = require('../region');
+const Movie = require('./models/Movie');
+const ams = require('./webscraper/allMoviesScraper');
+const sms = require('./webscraper/singleMovieScraper');
+var region = require('./region');
 
 mongoose.connect('mongodb://test12:12test@ds137261.mlab.com:37261/hunglinga12');
 // mongoose.connect('mongodb://junyu_test:junyu123@ds161471.mlab.com:61471/movies');
@@ -53,7 +53,7 @@ try {
 }
 
 // Webserver parameter
-const PORT = process.env.PORT || 80;
+const PORT = process.env.PORT || 3000;
 
 // Wit.ai parameters
 const WIT_TOKEN = process.env.WIT_TOKEN || '2DOU3VRLIV27HARM4STH5ORTKVQ3LCDV';
