@@ -299,7 +299,7 @@ const actions = {
     if (data.object === 'page') {
       data.entry.forEach(entry => {
         entry.messaging.forEach(event => {
-          if(event.postback.payload == 'GET_STARTED_PAYLOAD'){
+          if(event.postback && event.postback.payload == 'GET_STARTED_PAYLOAD'){
               return console.log('yay get started received');
           }
           if (event.message && !event.message.is_echo) {
