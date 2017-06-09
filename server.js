@@ -274,6 +274,9 @@ const actions = {
   });
   app.use(bodyParser.json({ verify: verifyRequestSignature }));
 
+  app.get('/', (req, res) => {
+    res.sendStatus(200);
+  });
   // Webhook setup
   app.get('/webhook', (req, res) => {
     console.log('hello');
