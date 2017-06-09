@@ -175,29 +175,12 @@ const actions = {
     var text = response.text;
     console.log("response text is: ", text)
     var context = request.context;
-    console.log('send function context: ', request.context);
+    console.log('send function context: ', context);
     // Our bot has something to say!
     // Let's retrieve the Facebook user whose session belongs to
     const recipientId = sessions[sessionId].fbid;
     console.log('the real id is: ', recipientId);
     if (recipientId) {
-      // Yay, we found our recipient!
-      // Let's forward our bot response to her.
-      // We return a promise to let our bot know when we're done sending
-      //console.log('<><><><>', JSON.stringify(context));
-      if(context.title && !context.area){
-        console.log('am i in the onwofnofowefb', recipientId);
-        sendLocationQuickReply(recipientId, FB_PAGE_TOKEN, function(err, response){});
-        return
-      }
-      if(context.title && context.timings && context.area && context.missingResult){
-        sendResetQuickReply(recipientId, function(err, response){});
-        return
-      }
-      if(context.title && context.result && context.timings && context.area) {
-        fbMessageCarouselCinemas(recipientId ,context);
-        return
-      }
       return fbMessage(recipientId, text)
       .then(() => null)
       .catch((err) => {
@@ -214,38 +197,88 @@ const actions = {
       return Promise.resolve()
     }
   },
+  sendReply(request){
+    const recipientId = sessions[request.sessionId].fbid;
+    var context = request.context
+    console.log("context inside sendReply is: ", request.context)
+    console.log('the real id is: ', recipientId);
+    if (recipientId) {
+      // Yay, we found our recipient!
+      // Let's forward our bot response to her.
+      // We return a promise to let our bot know when we're done sending
+      //console.log('<><><><>', JSON.stringify(context));
+      //Final successful search
+
+      if(context.title && context.result && context.timings && context.area) {
+         fbMessageCarouselCinemas(recipientId ,context)
+         return Promise.resolve(context)
+      }
+      //Unsuccessful search
+      if(context.title && context.timings && context.area && context.missingResult){
+        sendResetQuickReply(recipientId, function(err, response){})
+        return Promise.resolve(context)
+      }
+      if (context.title && context.area){
+        fbMessage(recipientId, "What time? :)", function(err, response){})
+        return Promise.resolve(context)
+      }
+      if((context.title && context.timings) || (context.title && context.area == null && context.timings == null)){
+        console.log('am i in the onwofnofowefb', recipientId);
+        sendLocationQuickReply(recipientId, FB_PAGE_TOKEN, function(err, response){})
+        return Promise.resolve(context)
+      }
+      if(context.area && context.title == null && context.timings){
+        fbMessage(recipientId, "Which movie? :)", function(err, response){})
+        return Promise.resolve(context)
+      }
+      if(context.area && context.title == null && context.timings == null){
+        fbMessage(recipientId, "Which movie? :)", function(err, response){})
+        return Promise.resolve(context)
+      }
+      if(context.timings && context.title == null && context.area == null){
+        fbMessage(recipientId, "Which movie? :)", function(err, response){})
+        return Promise.resolve(context)
+      }
+    }
+  },
   getTimeAndLocation({context, entities, sessionId}){
     console.log('gettimeandlocation');
     var recipientId = sessions[sessionId].fbid;
-    context.reset = false;
-    console.log(context);
+    // context.reset = false;
+    console.log("getTimeAndLocation context is: ",context);
     return new Promise((resolve, reject)=>{
-      const movie = firstEntityValue(entities, 'search_query');
-      if (movie){
+      const title = firstEntityValue(entities, 'search_query');
+      if (title){
         console.log('setting title')
-        context.title = movie;
+        var statusMessage = "Watching: " + title;
+        fbMessage(recipientId, statusMessage);
+        context.title = title;
       }
       const cinemaLocation = firstEntityValue(entities, 'cinema_location')
-      console.log('firstEntityValue cinema_location gives: ',cinemaLocation)
       if(cinemaLocation){
         console.log('setting area')
+        var statusMessage = "Your search area is set to: " + cinemaLocation;
+        fbMessage(recipientId, statusMessage);
         context.area = cinemaLocation;
       }
       const datetime = firstEntityValue(entities, 'datetime');
       if(datetime){
         console.log('setting timings')
+        var statusMessage = "Your search timing is set to: " + moment(datetime).format("dddd, hh:mmA");
+        fbMessage(recipientId, statusMessage);
         context.timings = datetime;
       }
       var area = firstEntityValue(entities, 'area');
-      console.log('firstEntityValue area gives: ',area)
       if(area){
         console.log('setting area')
+        var statusMessage = "Your search area is set to: " + area;
+        fbMessage(recipientId, statusMessage);
         context.area = area;
       }
       if(context.title && context.timings && context.area){
         console.log('just before the search service', context);
         if (recipientId){
-          var formattedTime = moment(context.timings).format("dddd, hmma");
+          var formattedTime = moment(context.timings).format("dddd, hmmA");
           var searchText = "Currently trawling the seas for " + context.title + " at " + formattedTime + " at " + context.area + "...";
           fbMessage(recipientId, searchText);
         }
@@ -269,9 +302,11 @@ const actions = {
         const reset = firstEntityValue(entities, 'reset');
         if (reset){
           context.reset = true;
-          fbMessage(recipientId, "Alrite, I've wiped my mind. What do you want now?");
+          fbMessage(recipientId, "Alrite, I've wiped my mind. What do you want now?", function(err, response){
+            return resolve(context);
+          });
         }
-        return resolve(context);
+        // return resolve(context);
       })
     }
   };
@@ -361,6 +396,7 @@ app.post('/webhook', (req, res) => {
                   delete context[value];
                 }
               }// Updating the user's current session state
+
               sessions[sessionId].context = context;
             })
             .catch((err) => {
