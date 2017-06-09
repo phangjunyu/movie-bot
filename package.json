@@ -18,7 +18,8 @@
     "mongoose": "^4.10.4",
     "node-wit": "^4.2.0",
     "request": "latest",
-    "uuid": "^3.0.0"
+    "uuid": "^3.0.0",
+    "node-cron": "~1.1.1"
   },
   "engines": {
     "node": ">=4.0.0"
