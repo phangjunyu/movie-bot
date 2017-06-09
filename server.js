@@ -177,7 +177,7 @@ const actions = {
     var text = response.text;
     //console.log("response text is: ", text)
     var context = request.context;
-    //console.log('send function context: ', request.context);
+    console.log('send function context: ', context);
     // Our bot has something to say!
     // Let's retrieve the Facebook user whose session belongs to
     const recipientId = sessions[sessionId].fbid;
@@ -220,38 +220,88 @@ const actions = {
       return Promise.resolve()
     }
   },
+  sendReply(request){
+    const recipientId = sessions[request.sessionId].fbid;
+    var context = request.context
+    console.log("context inside sendReply is: ", request.context)
+    console.log('the real id is: ', recipientId);
+    if (recipientId) {
+      // Yay, we found our recipient!
+      // Let's forward our bot response to her.
+      // We return a promise to let our bot know when we're done sending
+      //console.log('<><><><>', JSON.stringify(context));
+      //Final successful search
+
+      if(context.title && context.result && context.timings && context.area) {
+         fbMessageCarouselCinemas(recipientId ,context)
+         return Promise.resolve(context)
+      }
+      //Unsuccessful search
+      if(context.title && context.timings && context.area && context.missingResult){
+        sendResetQuickReply(recipientId, function(err, response){})
+        return Promise.resolve(context)
+      }
+      if (context.title && context.area){
+        fbMessage(recipientId, "What time? :)", function(err, response){})
+        return Promise.resolve(context)
+      }
+      if((context.title && context.timings) || (context.title && context.area == null && context.timings == null)){
+        console.log('am i in the onwofnofowefb', recipientId);
+        sendLocationQuickReply(recipientId, FB_PAGE_TOKEN, function(err, response){})
+        return Promise.resolve(context)
+      }
+      if(context.area && context.title == null && context.timings){
+        fbMessage(recipientId, "Which movie? :)", function(err, response){})
+        return Promise.resolve(context)
+      }
+      if(context.area && context.title == null && context.timings == null){
+        fbMessage(recipientId, "Which movie? :)", function(err, response){})
+        return Promise.resolve(context)
+      }
+      if(context.timings && context.title == null && context.area == null){
+        fbMessage(recipientId, "Which movie? :)", function(err, response){})
+        return Promise.resolve(context)
+      }
+    }
+  },
   getTimeAndLocation({context, entities, sessionId}){
     console.log('gettimeandlocation');
     var recipientId = sessions[sessionId].fbid;
-    context.reset = false;
-    console.log(context);
+    // context.reset = false;
+    console.log("getTimeAndLocation context is: ",context);
     return new Promise((resolve, reject)=>{
-      const movie = firstEntityValue(entities, 'search_query');
-      if (movie){
-        console.log('setting title', movie);
-        context.title = movie;
-      } 
+      const title = firstEntityValue(entities, 'search_query');
+      if (title){
+        console.log('setting title')
+        var statusMessage = "Watching: " + title;
+        fbMessage(recipientId, statusMessage);
+        context.title = title;
+      }
       const cinemaLocation = firstEntityValue(entities, 'cinema_location')
-      console.log('firstEntityValue cinema_location gives: ',cinemaLocation)
       if(cinemaLocation){
-        console.log('setting area', cinemaLocation);
+        console.log('setting area')
+        var statusMessage = "Your search area is set to: " + cinemaLocation;
+        fbMessage(recipientId, statusMessage);
         context.area = cinemaLocation;
       }
       const datetime = firstEntityValue(entities, 'datetime');
       if(datetime){
-        console.log('setting timings', datetime);
+        console.log('setting timings')
+        var statusMessage = "Your search timing is set to: " + moment(datetime).format("dddd, hh:mmA");
+        fbMessage(recipientId, statusMessage);
         context.timings = datetime;
       }
       var area = firstEntityValue(entities, 'area');
-      console.log('firstEntityValue area gives: ',area)
       if(area){
         console.log('setting area')
+        var statusMessage = "Your search area is set to: " + area;
+        fbMessage(recipientId, statusMessage);
         context.area = area;
       }
       if(context.title && context.timings && context.area){
         console.log('just before the search service', context);
         if (recipientId){
-          var formattedTime = moment(context.timings).format("dddd, hmma");
+          var formattedTime = moment(context.timings).format("dddd, hmmA");
           var searchText = "Currently trawling the seas for " + context.title + " at " + formattedTime + " at " + context.area + "...";
           fbMessage(recipientId, searchText);
         }
@@ -278,9 +328,11 @@ const actions = {
         const reset = firstEntityValue(entities, 'reset');
         if (reset){
           context.reset = true;
-          fbMessage(recipientId, "Alrite, I've wiped my mind. What do you want now?");
+          fbMessage(recipientId, "Alrite, I've wiped my mind. What do you want now?", function(err, response){
+            return resolve(context);
+          });
         }
-        return resolve(context);
+        // return resolve(context);
       })
     }
 }
@@ -362,11 +414,11 @@ app.get('/', (req, res) => {
 
                       var senId = event.sender.id;
                       var sessId = findOrCreateSession(senId);
-                      var text = 'Reset';
+                      var ttext = 'Reset';
                       sessions[sessId].context.resetID = "Y";
                       wit.runActions(
                                 sessId, // the user's current session
-                                text, // the user's message
+                                ttext, // the user's message
                                 sessions[sessId].context // the user's current session state
                               ).then((context) => {
                                   console.log('resetting context', context);
@@ -395,6 +447,48 @@ app.get('/', (req, res) => {
                       console.log('SEARCH TIMINGS BUTTON CLICKED');
                 }   
             }
+          // We retrieve the user's current session, or create one if it doesn't exist
+          // This is needed for our bot to figure out the conversation history
+          const sessionId = findOrCreateSession(sender);
+          // We retrieve the message content
+          const {text, attachments} = event.message;
+
+          console.log('the event is: ', event, event.message);
+          if (attachments) {
+            // We received an attachment
+            // Let's reply with an automatic message
+            fbMessage(sender, 'Sorry I can only process text messages for now.')
+            .catch(console.error);
+          }
+          else if (text) {
+            // We received a text message
+            // Let's forward the message to the Wit.ai Bot Engine
+            // This will run all actions until our bot has nothing left to do
+            wit.runActions(
+              sessionId, // the user's current session
+              text, // the user's message
+              sessions[sessionId].context // the user's current session state
+            ).then((context) => {
+              // Our bot did everything it has to do.
+              // Now it's waiting for further messages to proceed.
+              console.log('Waiting for next user messages');
+              // Based on the session state, you might want to reset the session.
+              // This depends heavily on the business logic of your bot.
+              // Example:
+              if (context.reset){
+                console.log('resetting context');
+                for (var value in context){
+                  delete context[value];
+                }
+              }// Updating the user's current session state
+
+              sessions[sessionId].context = context;
+            })
+            .catch((err) => {
+              console.error('Oops! Got an error from Wit: ', err.stack || err);
+            })
+          }
+         else if (event.message.quick_reply) {}
 
           else if (event.message && !event.message.is_echo) {
             // Yay! We got a new message!
