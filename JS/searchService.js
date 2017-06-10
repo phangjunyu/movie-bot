@@ -110,25 +110,21 @@ exports.findTheNearestTime = function(context, callback){
 exports.NowShowing = function(recipient, callback){
 	var recipientId = recipient;
 	var query = {};
-
+	console.log('inside now showing now');
 	Movie.aggregate([
 			{$match: query},
 			{$group: 
-				{	_id : null,
-					title: "$title",
+				{	_id : "$title"
 					//image url here
-				}
-			},
-			{$project:
-				{
-					title:1
 				}
 			}
 
 		], function(err, result){
+			console.log(result);
 			if(err) return(err);
+			console.log('let me check the aggregation result: ', result);
 			return callback(null, result);
-			//this here shoule return an array of movie names
+			//this here should return an array of movie names
 		})
 }
 
