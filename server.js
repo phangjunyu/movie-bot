@@ -64,12 +64,12 @@ const WIT_TOKEN = process.env.WIT_TOKEN || '2DOU3VRLIV27HARM4STH5ORTKVQ3LCDV';
 // Messenger API parameters
 //const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAX94gbB7OIBAEBN8WfWjsdMGH5JD3WORXdY461UhWs5PGFdYhPajN431ivFPGGO7eZCM4nlH4tkuDI7HzdIiwN0xUvFUIA8ckKinM0JZAQkooLeZCqL8uowhZCHrAXxsZCr5xYy669jRruCuzQNpr3S1XYSZCqpY4gg6Or5QoPwZDZD';
 
-//for hotelbot
 const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAX94gbB7OIBAI01ZBp8ufwGbMrOAMi9AWcEMp1Kkccs8EMseQKf7JRCl2jtwBI4v0VZBBj6et12owDj8wBLFhqdlv3MsRmZBhO9lC8xI0GKBtCvnZAMaIFjnAhHt0NPB1kAQ0F5zhNz5oQ1JSZAJQaA0mZAsHbCerl2ivDV7IXQZDZD';
 
 if (!FB_PAGE_TOKEN) { throw new Error('missing FB_PAGE_TOKEN') }
 // const FB_APP_SECRET = process.env.FB_APP_SECRET || '84f1b7362715035cd132a3fd67ed4c5f';
 //for mymoviebot
+
 const FB_APP_SECRET = process.env.FB_APP_SECRET || '84f1b7362715035cd132a3fd67ed4c5f';
 if (!FB_APP_SECRET) { throw new Error('missing FB_APP_SECRET') }
 
@@ -121,7 +121,7 @@ const fbMessageCarouselCinemas = (id, context) => {
     var timings = result.timings;
     var bookingLinks = result.bookingLinks
     timings.forEach(function(timing, index) {
-      var timing = moment(timing).format('HH:mm');
+      var timing = moment(timing).utcOffset('+0800').format('HH:mm');
       var button = {
         "type": "web_url",
         "url": bookingLinks[index],
@@ -318,7 +318,7 @@ const actions = {
       const datetime = firstEntityValue(entities, 'datetime');
       if(datetime){
         console.log('setting timings')
-        var statusMessage = "Your search timing is set to: " + moment(datetime).format("dddd, hh:mmA");
+        var statusMessage = "Your search timing is set to: " + moment(datetime).utcOffset('+0800').format("dddd, hh:mmA");
         fbMessage(recipientId, statusMessage);
         context.timings = datetime;
       }
@@ -332,7 +332,7 @@ const actions = {
       if(context.title && context.timings && context.area){
         console.log('just before the search service', context);
         if (recipientId){
-          var formattedTime = moment(context.timings).format("dddd, hmmA");
+          var formattedTime = moment(context.timings).utcOffset('+0800').format("dddd, hh:mmA");
           var searchText = "Currently trawling the seas for " + context.title + " at " + formattedTime + " at " + context.area + "...";
           fbMessage(recipientId, searchText);
         }
