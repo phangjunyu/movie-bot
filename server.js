@@ -264,7 +264,7 @@ const actions = {
       const datetime = firstEntityValue(entities, 'datetime');
       if(datetime){
         console.log('setting timings')
-        var statusMessage = "Your search timing is set to: " + moment(datetime).utcOffset('+0100').format("dddd, hh:mmA");
+        var statusMessage = "Your search timing is set to: " + moment(datetime).utcOffset('+0800').format("dddd, hh:mmA");
         fbMessage(recipientId, statusMessage);
         context.timings = datetime;
       }
@@ -278,7 +278,7 @@ const actions = {
       if(context.title && context.timings && context.area){
         console.log('just before the search service', context);
         if (recipientId){
-          var formattedTime = moment(context.timings).utcOffset('+0100').format("dddd, hh:mmA");
+          var formattedTime = moment(context.timings).utcOffset('+0800').format("dddd, hh:mmA");
           var searchText = "Currently trawling the seas for " + context.title + " at " + formattedTime + " at " + context.area + "...";
           fbMessage(recipientId, searchText);
         }
