@@ -65,13 +65,13 @@ const WIT_TOKEN = process.env.WIT_TOKEN || '2DOU3VRLIV27HARM4STH5ORTKVQ3LCDV';
 //const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAX94gbB7OIBAEBN8WfWjsdMGH5JD3WORXdY461UhWs5PGFdYhPajN431ivFPGGO7eZCM4nlH4tkuDI7HzdIiwN0xUvFUIA8ckKinM0JZAQkooLeZCqL8uowhZCHrAXxsZCr5xYy669jRruCuzQNpr3S1XYSZCqpY4gg6Or5QoPwZDZD';
 
 
-const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAX94gbB7OIBAI01ZBp8ufwGbMrOAMi9AWcEMp1Kkccs8EMseQKf7JRCl2jtwBI4v0VZBBj6et12owDj8wBLFhqdlv3MsRmZBhO9lC8xI0GKBtCvnZAMaIFjnAhHt0NPB1kAQ0F5zhNz5oQ1JSZAJQaA0mZAsHbCerl2ivDV7IXQZDZD';
+const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAZA7FbmJywkBAIjjKOarwhdAKHFFGTsZCzDZBnPU3ljkSB5mZAAZBrCPNU3Fp24Boy8UkxPnxlZCTplb7zEYUHnQEBoDzh6jymy8G5HGrexBBQyaJF5lmRBjgkv379ZCSSgGlqzmZCxuPbDHXAHXkmz067M3zVIVuEmQo4J1325IQZDZD';
 
 if (!FB_PAGE_TOKEN) { throw new Error('missing FB_PAGE_TOKEN') }
 // const FB_APP_SECRET = process.env.FB_APP_SECRET || '84f1b7362715035cd132a3fd67ed4c5f';
 //for mymoviebot
 
-const FB_APP_SECRET = process.env.FB_APP_SECRET || '84f1b7362715035cd132a3fd67ed4c5f';
+const FB_APP_SECRET = process.env.FB_APP_SECRET || '16b510b46fe3a12f91a42acb2ba5b2d4';
 if (!FB_APP_SECRET) { throw new Error('missing FB_APP_SECRET') }
 
 const FB_VERIFY_TOKEN = "VOUCHMOVIEBOT";
@@ -291,7 +291,7 @@ const actions = {
         context.area = area;
       }
 
-      if(context.title && context.timings && context.area && context.reset == null && context.missingResult == null){
+      if(context.title && context.timings && context.area && context.reset == null){
         console.log('just before the search service', context);
         if (recipientId){
           var formattedTime = moment(context.timings).utcOffset('+0800').format("dddd, HH:mm");
