@@ -36,8 +36,6 @@ exports.findTheNearestTime = function(context, callback){
 	    "timings": {
 	      $gte: minTime
 	    }}
-	    console.log('why am i undefined',context.title);
-	    console.log("ARGSDFGASFGA: ", context.area);
 	    var areaArray;
 	    var area = JSON.stringify(context.area).slice(1, -1);
 	    if(area == 'North'){
@@ -60,7 +58,6 @@ exports.findTheNearestTime = function(context, callback){
 	    }
 	    if(areaArray == null){
 	      areaArray = [area];
-	      console.log("new areaArray is: ", areaArray)
 	    }
 	    Movie.aggregate([
 	      {$match:
@@ -92,7 +89,7 @@ exports.findTheNearestTime = function(context, callback){
 	  },
 	  {$sort: {difference: 1}
 	},
-	// {$limit: 5},
+	{$limit: 10},
 	{$group:{
 	    _id: "$cinemaName",
 	    title: {$first: '$title'},

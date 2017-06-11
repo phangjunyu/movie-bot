@@ -64,13 +64,14 @@ const WIT_TOKEN = process.env.WIT_TOKEN || '2DOU3VRLIV27HARM4STH5ORTKVQ3LCDV';
 // Messenger API parameters
 //const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAX94gbB7OIBAEBN8WfWjsdMGH5JD3WORXdY461UhWs5PGFdYhPajN431ivFPGGO7eZCM4nlH4tkuDI7HzdIiwN0xUvFUIA8ckKinM0JZAQkooLeZCqL8uowhZCHrAXxsZCr5xYy669jRruCuzQNpr3S1XYSZCqpY4gg6Or5QoPwZDZD';
 
-const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAX94gbB7OIBAI01ZBp8ufwGbMrOAMi9AWcEMp1Kkccs8EMseQKf7JRCl2jtwBI4v0VZBBj6et12owDj8wBLFhqdlv3MsRmZBhO9lC8xI0GKBtCvnZAMaIFjnAhHt0NPB1kAQ0F5zhNz5oQ1JSZAJQaA0mZAsHbCerl2ivDV7IXQZDZD';
+
+const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAZA7FbmJywkBAIjjKOarwhdAKHFFGTsZCzDZBnPU3ljkSB5mZAAZBrCPNU3Fp24Boy8UkxPnxlZCTplb7zEYUHnQEBoDzh6jymy8G5HGrexBBQyaJF5lmRBjgkv379ZCSSgGlqzmZCxuPbDHXAHXkmz067M3zVIVuEmQo4J1325IQZDZD';
 
 if (!FB_PAGE_TOKEN) { throw new Error('missing FB_PAGE_TOKEN') }
 // const FB_APP_SECRET = process.env.FB_APP_SECRET || '84f1b7362715035cd132a3fd67ed4c5f';
 //for mymoviebot
 
-const FB_APP_SECRET = process.env.FB_APP_SECRET || '84f1b7362715035cd132a3fd67ed4c5f';
+const FB_APP_SECRET = process.env.FB_APP_SECRET || '16b510b46fe3a12f91a42acb2ba5b2d4';
 if (!FB_APP_SECRET) { throw new Error('missing FB_APP_SECRET') }
 
 const FB_VERIFY_TOKEN = "VOUCHMOVIEBOT";
@@ -121,7 +122,7 @@ const fbMessageCarouselCinemas = (id, context) => {
     var timings = result.timings;
     var bookingLinks = result.bookingLinks
     timings.forEach(function(timing, index) {
-      var timing = moment(timing).utcOffset('+0800').format('HH:mm');
+      var timing = moment(timing).utcOffset('+0800').format('dddd, HH:mm');
       var button = {
         "type": "web_url",
         "url": bookingLinks[index],
@@ -249,58 +250,18 @@ const actions = {
       return Promise.resolve()
     }
   },
-  sendReply(request){
-    const recipientId = sessions[request.sessionId].fbid;
-    var context = request.context
-    console.log("context inside sendReply is: ", request.context)
-    console.log('the real id is: ', recipientId);
-    if (recipientId) {
-      // Yay, we found our recipient!
-      // Let's forward our bot response to her.
-      // We return a promise to let our bot know when we're done sending
-      //console.log('<><><><>', JSON.stringify(context));
-      //Final successful search
 
-      if(context.title && context.result && context.timings && context.area) {
-          fbMessage(recipientId, "ARRRR ME HEARTY", function(err, response){})
-         fbMessageCarouselCinemas(recipientId ,context)
-         return Promise.resolve(context)
-      }
-      //Unsuccessful search
-      if(context.title && context.timings && context.area && context.missingResult){
-        fbMessage(recipientId, "Shiver me timbers!", function(err, response){})
-        sendResetQuickReply(recipientId, function(err, response){})
-        return Promise.resolve(context)
-      }
-      if (context.title && context.area){
-        fbMessage(recipientId, "What time? :)", function(err, response){})
-        return Promise.resolve(context)
-      }
-      if((context.title && context.timings) || (context.title && context.area == null && context.timings == null)){
-        console.log('am i in the onwofnofowefb', recipientId);
-        sendLocationQuickReply(recipientId, FB_PAGE_TOKEN, function(err, response){})
-        return Promise.resolve(context)
-      }
-      if(context.area && context.title == null && context.timings){
-        fbMessage(recipientId, "Which movie? :)", function(err, response){})
-        return Promise.resolve(context)
-      }
-      if(context.area && context.title == null && context.timings == null){
-        fbMessage(recipientId, "Which movie? :)", function(err, response){})
-        return Promise.resolve(context)
-      }
-      if(context.timings && context.title == null && context.area == null){
-        fbMessage(recipientId, "Which movie? :)", function(err, response){})
-        return Promise.resolve(context)
-      }
-    }
-  },
   getTimeAndLocation({context, entities, sessionId}){
-    console.log('gettimeandlocation');
     var recipientId = sessions[sessionId].fbid;
     // context.reset = false;
     console.log("getTimeAndLocation context is: ",context);
     return new Promise((resolve, reject)=>{
+
+      const reset = firstEntityValue(entities, 'reset')
+      if(reset){
+        console.log('reset is true')
+        context.reset = true;
+      }
       const title = firstEntityValue(entities, 'search_query');
       if (title){
         console.log('setting title')
@@ -318,21 +279,22 @@ const actions = {
       const datetime = firstEntityValue(entities, 'datetime');
       if(datetime){
         console.log('setting timings')
-        var statusMessage = "Your search timing is set to: " + moment(datetime).utcOffset('+0800').format("dddd, hh:mmA");
+        var statusMessage = "Your search timing is set to: " + moment(datetime).utcOffset('+0800').format("dddd, HH:mm");
         fbMessage(recipientId, statusMessage);
         context.timings = datetime;
       }
-      var area = firstEntityValue(entities, 'area');
+      const area = firstEntityValue(entities, 'area');
       if(area){
         console.log('setting area')
         var statusMessage = "Your search area is set to: " + area;
         fbMessage(recipientId, statusMessage);
         context.area = area;
       }
-      if(context.title && context.timings && context.area){
+
+      if(context.title && context.timings && context.area && context.reset == null){
         console.log('just before the search service', context);
         if (recipientId){
-          var formattedTime = moment(context.timings).utcOffset('+0800').format("dddd, hh:mmA");
+          var formattedTime = moment(context.timings).utcOffset('+0800').format("dddd, HH:mm");
           var searchText = "Currently trawling the seas for " + context.title + " at " + formattedTime + " at " + context.area + "...";
           fbMessage(recipientId, searchText);
         }
@@ -341,29 +303,73 @@ const actions = {
           if (result.length > 0){
             context.reset = true;
             context.result = JSON.stringify(result);
+            if (context.missingResult){
+              delete context.missingResult;
+            }
           }
           else context.missingResult = true;
           return resolve(context);
-        })    }
-        else
+        })
+      }
+
         return resolve(context);
       })
 
     },
-    clearContext({context, entities, sessionId}){
-      var recipientId = sessions[sessionId].fbid;
-      return new Promise((resolve, reject)=>{
-        const reset = firstEntityValue(entities, 'reset');
-        if (reset){
-          context.reset = true;
-          fbMessage(recipientId, "Alrite, I've wiped my mind. What do you want now?", function(err, response){
-            return resolve(context);
-          });
-        }
-        // return resolve(context);
-      })
+
+  sendReply(request){
+    const recipientId = sessions[request.sessionId].fbid;
+    var context = request.context
+    console.log("context inside sendReply is: ", request.context)
+    console.log('the real id is: ', recipientId);
+    if (recipientId) {
+      // Yay, we found our recipient!
+      // Let's forward our bot response to her.
+      // We return a promise to let our bot know when we're done sending
+      //console.log('<><><><>', JSON.stringify(context));
+      //Final successful search
+
+      //reset pressed
+    if (context.reset && context.missingResult){
+            fbMessage(recipientId, "Alrite, I've wiped my mind. What do you want now?", function(err, response){
+              // return resolve(context);
+            });
+          return Promise.resolve(context);
+      }
+      //successful search
+      else if(context.title && context.result && context.timings && context.area) {
+          fbMessageCarouselCinemas(recipientId ,context)
+         return Promise.resolve(context)
+      }
+      //Unsuccessful search
+      else if(context.title && context.timings && context.area && context.missingResult && context.reset == null){
+      sendResetQuickReply(recipientId, function(err, response){})
+        return Promise.resolve(context)
+      }
+      else if (context.title && context.area){
+        fbMessage(recipientId, "What time? :)\nPlease use pm or am!", function(err, response){})
+        return Promise.resolve(context)
+      }
+      else if((context.title && context.timings) || (context.title && context.area == null && context.timings == null)){
+        sendLocationQuickReply(recipientId, FB_PAGE_TOKEN, function(err, response){})
+        return Promise.resolve(context)
+      }
+      else if(context.area && context.title == null && context.timings){
+        fbMessage(recipientId, "Which movie? :)", function(err, response){})
+        return Promise.resolve(context)
+      }
+      else if(context.area && context.title == null && context.timings == null){
+        fbMessage(recipientId, "Which movie? :)", function(err, response){})
+        return Promise.resolve(context)
+      }
+      else if(context.timings && context.title == null && context.area == null){
+        fbMessage(recipientId, "Which movie? :)", function(err, response){})
+        return Promise.resolve(context)
+      }
     }
-}
+  },
+
+};
 
 // Setting up our bot
 const wit = new Wit({
@@ -420,9 +426,9 @@ app.post('/webhook', (req, res) => {
   //context.reset = true;
   if (data.object === 'page') {
     data.entry.forEach(entry => {
-      entry.messaging.forEach(event => { 
+      entry.messaging.forEach(event => {
         if(event.postback && event.postback.payload && event.postback.payload != undefined)
-            { 
+            {
               console.log('am i even in here');
                 switch(event.postback.payload){
 
@@ -432,8 +438,8 @@ app.post('/webhook', (req, res) => {
                   case 'NOW_SHOWIMG':
                       console.log('requested for now showing movies');
                       var recipientId = event.sender.id;
-                      var sessId = findOrCreateSession(senId);                   
-                      summonTheCarousels(recipientId);                     
+                      var sessId = findOrCreateSession(senId);
+                      summonTheCarousels(recipientId);
                       break;
                   case 'RESET':
                   console.log('RESET BUTTON CLICKED, relaying to context reset');
@@ -478,11 +484,11 @@ app.post('/webhook', (req, res) => {
                       break;
                   case 'SEARCH_TIMINGS':
                       console.log('SEARCH TIMINGS BUTTON CLICKED');
-                }   
+                }
             }
         // We retrieve the user's current session, or create one if it doesn't exist
         // This is needed for our bot to figure out the conversation history
-        else if(event.message && !event.message.is_echo){ 
+        else if(event.message && !event.message.is_echo){
         var sender = event.sender.id;
         const sessionId = findOrCreateSession(sender);
         // We retrieve the message content
@@ -645,7 +651,7 @@ console.log('entered the summon carousels');
       if (stringLength < 10){quotient =1;}
 
       for(i=0;i<=quotient;i++)
-          { 
+          {
             var resultArr = [];
             resultArr = elementArray.slice(i*10, (i*10)+10);
             console.log('wiufiuwefiuewbfbw',resultArr);
@@ -744,7 +750,7 @@ request({
 
 function sendResetQuickReply(recipient, callback){
   var messData = {
-    "text":" I'm sorry. There are no other showings within half an hour of the timing you gave! Either change one of the parameters or press Reset to start a new search!",
+    "text":" Shiver me timbers!!\nI'm sorry. There are no other showings within half an hour of the timing you gave! Either change one of the parameters or press Reset to start a new search!",
     "quick_replies":[
       {"content_type":"text",
       "title":"Reset",
@@ -816,6 +822,3 @@ function sendGenericMessage(recipient, elements, accessToken, callback) {
 app.listen(PORT);
 
 console.log('Listening on :' + PORT + '...');
-
-
-
