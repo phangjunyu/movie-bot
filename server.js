@@ -62,11 +62,11 @@ const WIT_TOKEN = process.env.WIT_TOKEN || '2DOU3VRLIV27HARM4STH5ORTKVQ3LCDV';
 // Messenger API parameters
 //const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAX94gbB7OIBAEBN8WfWjsdMGH5JD3WORXdY461UhWs5PGFdYhPajN431ivFPGGO7eZCM4nlH4tkuDI7HzdIiwN0xUvFUIA8ckKinM0JZAQkooLeZCqL8uowhZCHrAXxsZCr5xYy669jRruCuzQNpr3S1XYSZCqpY4gg6Or5QoPwZDZD';
 
-const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAX94gbB7OIBAADqkC6JULXem6zHUtV64ZA04YoMYBZAm1uo3GoZAbZAFiKo2pF4zcWhqcsQZAxZBJkQP3kJziGxoVw3qod6xDM4agPZCPR66O7g3wavqYRc9bIJruDM2oZAkudSrZAtse9lZBl0Fae9w7WFtmi1z81m5nUu8O7ZCczagZDZD';
+const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAZA7FbmJywkBAPTpUjNTvWsj5gqvn7w7c0FogFI1EcHhv1vUnRBWxwJVdWcc3t2mBpJiPrpVb5IepHkZBZCVGM3CdLLGRF9sFRuzWKZC0a7RVhK57iTikWertYFjFWlzKsJqDrumbvMTz4ZB9RpoBf0VxnzbxZAPzA1wEZBtZAx4QZDZD';
 
 if (!FB_PAGE_TOKEN) { throw new Error('missing FB_PAGE_TOKEN') }
 // const FB_APP_SECRET = process.env.FB_APP_SECRET || '84f1b7362715035cd132a3fd67ed4c5f';
-const FB_APP_SECRET = process.env.FB_APP_SECRET || '84f1b7362715035cd132a3fd67ed4c5f';
+const FB_APP_SECRET = process.env.FB_APP_SECRET || '16b510b46fe3a12f91a42acb2ba5b2d4';
 if (!FB_APP_SECRET) { throw new Error('missing FB_APP_SECRET') }
 
 const FB_VERIFY_TOKEN = "VOUCHMOVIEBOT";
@@ -208,22 +208,19 @@ const actions = {
       //Final successful search
 
       if(context.title && context.result && context.timings && context.area) {
-          fbMessage(recipientId, "ARRRR ME HEARTY", function(err, response){})
-         fbMessageCarouselCinemas(recipientId ,context)
+          fbMessageCarouselCinemas(recipientId ,context)
          return Promise.resolve(context)
       }
       //Unsuccessful search
       if(context.title && context.timings && context.area && context.missingResult){
-        fbMessage(recipientId, "Shiver me timbers!", function(err, response){})
-        sendResetQuickReply(recipientId, function(err, response){})
+      sendResetQuickReply(recipientId, function(err, response){})
         return Promise.resolve(context)
       }
       if (context.title && context.area){
-        fbMessage(recipientId, "What time? :)", function(err, response){})
+        fbMessage(recipientId, "What time? :)\nPlease use pm or am!", function(err, response){})
         return Promise.resolve(context)
       }
       if((context.title && context.timings) || (context.title && context.area == null && context.timings == null)){
-        console.log('am i in the onwofnofowefb', recipientId);
         sendLocationQuickReply(recipientId, FB_PAGE_TOKEN, function(err, response){})
         return Promise.resolve(context)
       }
@@ -242,7 +239,6 @@ const actions = {
     }
   },
   getTimeAndLocation({context, entities, sessionId}){
-    console.log('gettimeandlocation');
     var recipientId = sessions[sessionId].fbid;
     // context.reset = false;
     console.log("getTimeAndLocation context is: ",context);
@@ -291,22 +287,22 @@ const actions = {
           else context.missingResult = true;
           return resolve(context);
         })    }
-        else
         return resolve(context);
       })
 
     },
     clearContext({context, entities, sessionId}){
+      console.log("running clearContext")
       var recipientId = sessions[sessionId].fbid;
       return new Promise((resolve, reject)=>{
         const reset = firstEntityValue(entities, 'reset');
         if (reset){
           context.reset = true;
           fbMessage(recipientId, "Alrite, I've wiped my mind. What do you want now?", function(err, response){
-            return resolve(context);
+            // return resolve(context);
           });
         }
-        // return resolve(context);
+        return resolve(context);
       })
     }
   };
@@ -590,7 +586,7 @@ request({
 
 function sendResetQuickReply(recipient, callback){
   var messData = {
-    "text":" I'm sorry. There are no other showings within half an hour of the timing you gave! Either change one of the parameters or press Reset to start a new search!",
+    "text":" Shiver me timbers!!\nI'm sorry. There are no other showings within half an hour of the timing you gave! Either change one of the parameters or press Reset to start a new search!",
     "quick_replies":[
       {"content_type":"text",
       "title":"Reset",

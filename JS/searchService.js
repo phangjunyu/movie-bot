@@ -91,7 +91,7 @@ exports.findTheNearestTime = function(context, callback){
 	  },
 	  {$sort: {difference: 1}
 	},
-	// {$limit: 5},
+	{$limit: 10},
 	{$group:{
 	    _id: "$cinemaName",
 	    title: {$first: '$title'},
