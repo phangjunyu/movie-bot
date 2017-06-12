@@ -65,13 +65,13 @@ const WIT_TOKEN = process.env.WIT_TOKEN || '2DOU3VRLIV27HARM4STH5ORTKVQ3LCDV';
 //const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAX94gbB7OIBAEBN8WfWjsdMGH5JD3WORXdY461UhWs5PGFdYhPajN431ivFPGGO7eZCM4nlH4tkuDI7HzdIiwN0xUvFUIA8ckKinM0JZAQkooLeZCqL8uowhZCHrAXxsZCr5xYy669jRruCuzQNpr3S1XYSZCqpY4gg6Or5QoPwZDZD';
 
 
-const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAZA7FbmJywkBAIjjKOarwhdAKHFFGTsZCzDZBnPU3ljkSB5mZAAZBrCPNU3Fp24Boy8UkxPnxlZCTplb7zEYUHnQEBoDzh6jymy8G5HGrexBBQyaJF5lmRBjgkv379ZCSSgGlqzmZCxuPbDHXAHXkmz067M3zVIVuEmQo4J1325IQZDZD';
+const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAX94gbB7OIBAMrbsh8nr2n6s2Y2QWaQwhZAN9bTSFbhzu8tRTFZBVoad21hJHhIoW6zjqGsQyHqjA4QQbgnTBdXDKb6lxqQjZBoIml93HlyuHPHtzVKgPMM6Ha7GyDHPndYRSjqFxQjo8ikrIJre9ABbdwZBqN8RZBaV5KsSQAZDZD';
 
 if (!FB_PAGE_TOKEN) { throw new Error('missing FB_PAGE_TOKEN') }
-// const FB_APP_SECRET = process.env.FB_APP_SECRET || '84f1b7362715035cd132a3fd67ed4c5f';
+const FB_APP_SECRET = process.env.FB_APP_SECRET || '84f1b7362715035cd132a3fd67ed4c5f';
 //for mymoviebot
 
-const FB_APP_SECRET = process.env.FB_APP_SECRET || '16b510b46fe3a12f91a42acb2ba5b2d4';
+// const FB_APP_SECRET = process.env.FB_APP_SECRET || '16b510b46fe3a12f91a42acb2ba5b2d4';
 if (!FB_APP_SECRET) { throw new Error('missing FB_APP_SECRET') }
 
 const FB_VERIFY_TOKEN = "VOUCHMOVIEBOT";
@@ -252,6 +252,7 @@ const actions = {
   },
 
   getTimeAndLocation({context, entities, sessionId}){
+    // console.log("getTimeAndLocation entities are: ", entities);
     var recipientId = sessions[sessionId].fbid;
     // context.reset = false;
     console.log("getTimeAndLocation context is: ",context);
@@ -320,6 +321,7 @@ const actions = {
   sendReply(request){
     const recipientId = sessions[request.sessionId].fbid;
     var context = request.context
+    var entities = request.entities
     console.log("context inside sendReply is: ", request.context)
     console.log('the real id is: ', recipientId);
     if (recipientId) {
@@ -330,6 +332,13 @@ const actions = {
       //Final successful search
 
       //reset pressed
+
+      const reset = firstEntityValue(entities, 'reset')
+      if(reset){
+        console.log('SENDREPLY reset is true')
+        context.reset = true;
+      }
+
     if (context.reset && context.missingResult){
             fbMessage(recipientId, "Alrite, I've wiped my mind. What do you want now?", function(err, response){
               // return resolve(context);
