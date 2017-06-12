@@ -455,8 +455,14 @@ app.post('/webhook', (req, res) => {
 
                       var senId = event.sender.id;
                       var sessId = findOrCreateSession(senId);
-                      var ttext = 'Reset';
+                      var ttext = 'I want to watch null at null at null';
                       sessions[sessId].context.resetID = "Y";
+                      fbMessage(senId, "DONE!");
+                      var reset = true;
+                      var context = {};
+                      context.title = null;
+                      sessions[sessId].context.title = null;
+                      wit.converse(sessId, context, ttext, reset)
                       wit.runActions(
                                 sessId, // the user's current session
                                 ttext, // the user's message
@@ -467,6 +473,7 @@ app.post('/webhook', (req, res) => {
                                   if(context.reset ==true){
                                     for(var value in context)
                                       delete context[value];
+
                                     console.log('owuebfuwebfouewbf', context);
                                   }
                                 sessions[sessId].context = context;
@@ -644,8 +651,6 @@ console.log('entered the summon carousels');
                         subtitle: "blank"
                         //button: "link"
                       }
-
-
         elementArray.push(element);
       })
       var i;
