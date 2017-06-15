@@ -26,6 +26,7 @@ const Movie = require('./models/Movie');
 const ams = require('./webscraper/allMoviesScraper');
 const sms = require('./webscraper/singleMovieScraper');
 var region = require('./region');
+var cronJob = require('./JS/cronjob');
 
 
 
@@ -827,6 +828,8 @@ function sendGenericMessage(recipient, elements, accessToken, callback) {
 
 // router.route('/startCronjob')
 //   .get(cronjob.beginCronjob)
+
+cronJob.beginCronjob();
 
 app.listen(PORT);
 

@@ -22,9 +22,9 @@ exports.findQuery = function(movie, showTime, callback){
 
 
 exports.findTheNearestTime = function(context, callback){
-	var requestedTime = moment(context.timings).toDate();
-	var maxTime = moment(context.timings).add(30, 'minutes').toDate();
-	var minTime = moment(context.timings).add(-30, 'minutes').toDate();
+	var requestedTime = moment(context.timings).utcOffset('+0800').toDate();
+	var maxTime = moment(context.timings).utcOffset('+0800').add(30, 'minutes').toDate();
+	var minTime = moment(context.timings).utcOffset('+0800').add(-30, 'minutes').toDate();
 	var searchTitle = context.title;
 	console.log('am i in search service');
 	var query2 = {
