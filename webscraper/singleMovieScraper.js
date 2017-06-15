@@ -33,7 +33,7 @@ exports.getShowTimesByMovie = function(movieJson, callback){
           data.find('.movie-showtimes').children().children().each(function(i, elem){
             var hourmin = $(this).find('a').text();
             hourmin = moment(hourmin, "HH:mm a").format("HHmm");
-            var finalDate = moment(urlDate+hourmin, 'YYYY-MM-DDHHmm')
+            var finalDate = moment(urlDate+hourmin+' +0800', 'YYYY-MM-DDHHmm Z')
             var bookingLink = $(this).find('a').attr('onclick');
             bookingLink = linkParser(bookingLink);
             bookingLinksByCinema.push(bookingLink);

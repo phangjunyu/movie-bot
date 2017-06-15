@@ -402,6 +402,28 @@ app.use(bodyParser.json({ verify: verifyRequestSignature }));
 app.get('/', (req, res) => {
   res.sendStatus(200);
 });
+
+// app.get('/test', (req, res) => {
+//   Movie.find({title: 'Wonder Woman'}, function(err, movies) {
+//     res.json(movies);
+//   })
+// });
+
+// app.get('/test2', (req, res) => {
+//   var timing = moment("2017-06-15 18:40", "YYYY-MM-DD HH:mm");
+//   console.log(timing);
+//   var context = {
+//     title: 'Wonder Woman',
+//     area: 'Central',
+//     timings: timing,
+
+//   }
+//   searchService.findTheNearestTime(context,function(err, result){
+//       if(err) {return console.log(err);}
+//       res.json(result);
+//     })
+// });
+
 // Webhook setup
 app.get('/webhook', (req, res) => {
   console.log('hello');
