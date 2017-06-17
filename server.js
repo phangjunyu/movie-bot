@@ -28,8 +28,8 @@ const sms = require('./webscraper/singleMovieScraper');
 var region = require('./region');
 
 
-// mongoose.connect('mongodb://test12:12test@ds137261.mlab.com:37261/hunglinga12');
-mongoose.connect('mongodb://junyu_test:junyu123@ds161471.mlab.com:61471/movies');
+mongoose.connect('mongodb://test12:12test@ds137261.mlab.com:37261/hunglinga12');
+//mongoose.connect('mongodb://junyu_test:junyu123@ds161471.mlab.com:61471/movies');
 
 function firstEntityValue(entities, entity){
   const val = entities && entities[entity] &&
@@ -63,12 +63,12 @@ const WIT_TOKEN = process.env.WIT_TOKEN || '2DOU3VRLIV27HARM4STH5ORTKVQ3LCDV';
 //const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAX94gbB7OIBAEBN8WfWjsdMGH5JD3WORXdY461UhWs5PGFdYhPajN431ivFPGGO7eZCM4nlH4tkuDI7HzdIiwN0xUvFUIA8ckKinM0JZAQkooLeZCqL8uowhZCHrAXxsZCr5xYy669jRruCuzQNpr3S1XYSZCqpY4gg6Or5QoPwZDZD';
 
 //for hotelbot
-const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAZA7FbmJywkBAFZBnRdHnARi2m2ZBnm800pK8H6khdqbx0ZC2c58MXvzrbtpqV8TAzEeLZCAzEfSlsqTTjjaZCre5h3e97FRVr1Oc1DgrYsXAZCEUIAzmJ0TOASyndnWm4BDFtfX8HO3ZAdRWOdOWPg6UZB3oZBFbW1vEukCMUqdIowZDZD';
+const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAX94gbB7OIBAPyMevQwRpIZBVL49I3UC34YKtbvwsxThZBZAaTcJTpkt7uUzj2cXKUQpZBJqTKe303O1j8ufQShCmtmQ9gSMwNddc4PRTt0A2xLucLjsRI34QUdVCOBhz8w4vuC1NJg9ceGYa1WueEPC6q23lWZC8LGxpfsgdQZDZD';
 
 if (!FB_PAGE_TOKEN) { throw new Error('missing FB_PAGE_TOKEN') }
 // const FB_APP_SECRET = process.env.FB_APP_SECRET || '84f1b7362715035cd132a3fd67ed4c5f';
 //for mymoviebot
-const FB_APP_SECRET = process.env.FB_APP_SECRET || '16b510b46fe3a12f91a42acb2ba5b2d4';
+const FB_APP_SECRET = process.env.FB_APP_SECRET || '84f1b7362715035cd132a3fd67ed4c5f';
 if (!FB_APP_SECRET) { throw new Error('missing FB_APP_SECRET') }
 
 const FB_VERIFY_TOKEN = "VOUCHMOVIEBOT";
