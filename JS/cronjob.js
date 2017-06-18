@@ -3,7 +3,7 @@ var request = require('request');
 
 
 exports.beginCronjob = function(){
-	cron.schedule('0 0 0 * *', function(){
+	cron.schedule('0 0 16 * *', function(){
 		request({
 			url: 'http://localhost/scrape',
 			method: 'GET'

@@ -11,6 +11,7 @@ var async = require('async');
 
 exports.getShowTimesByMovie = function(movieJson, callback){
   var urlDate = movieJson.dateScraped
+  console.log('the movieJson is:', movieJson);
   var url = "http://www.insing.com/" + movieJson.movieURL + "showtimes/?d=" + urlDate;
   request(url, function(error, response, html){
     if(error){
@@ -24,7 +25,7 @@ exports.getShowTimesByMovie = function(movieJson, callback){
       var allShowTimes = [];
       $('.cinema-showtime').each(function(i,elem){
           var movie = new Movie();
-          // movie.imageLink = movieJson.imageLink
+          movie.imageLink = movieJson.imageLink
           movie.title = movieJson.movieName;
           movie.inSingID = movieJson.movieID;
           var data = $(this);
@@ -33,7 +34,7 @@ exports.getShowTimesByMovie = function(movieJson, callback){
           data.find('.movie-showtimes').children().children().each(function(i, elem){
             var hourmin = $(this).find('a').text();
             hourmin = moment(hourmin, "HH:mm a").format("HHmm");
-            var finalDate = moment(urlDate+hourmin, 'YYYY-MM-DDHHmm')
+            var finalDate = moment(urlDate+hourmin+' +0800', 'YYYY-MM-DDHHmm Z')
             var bookingLink = $(this).find('a').attr('onclick');
             bookingLink = linkParser(bookingLink);
             bookingLinksByCinema.push(bookingLink);
@@ -43,6 +44,7 @@ exports.getShowTimesByMovie = function(movieJson, callback){
           movie.cinemaName = cinemaName;
           movie.timings = showTimeByCinema;
           movie.bookingLinks = bookingLinksByCinema;
+
 
           allShowTimes.push(movie);
       })

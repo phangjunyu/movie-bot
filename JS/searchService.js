@@ -20,10 +20,11 @@ exports.findQuery = function(movie, showTime, callback){
     return callback(null,movieArray[0]);
   })}
 
+
 exports.findTheNearestTime = function(context, callback){
-	var requestedTime = moment(context.timings).toDate();
-	var maxTime = moment(context.timings).add(30, 'minutes').toDate();
-	var minTime = moment(context.timings).add(-30, 'minutes').toDate();
+	var requestedTime = moment(context.timings).utcOffset('+0800').toDate();
+	var maxTime = moment(context.timings).utcOffset('+0800').add(30, 'minutes').toDate();
+	var minTime = moment(context.timings).utcOffset('+0800').add(-30, 'minutes').toDate();
 	var searchTitle = context.title;
 	console.log('am i in search service');
 	var query2 = {
@@ -35,8 +36,6 @@ exports.findTheNearestTime = function(context, callback){
 	    "timings": {
 	      $gte: minTime
 	    }}
-	    console.log('why am i undefined',context.title);
-	    console.log("ARGSDFGASFGA: ", context.area);
 	    var areaArray;
 	    var area = JSON.stringify(context.area).slice(1, -1);
 	    if(area == 'North'){
@@ -59,7 +58,6 @@ exports.findTheNearestTime = function(context, callback){
 	    }
 	    if(areaArray == null){
 	      areaArray = [area];
-	      console.log("new areaArray is: ", areaArray)
 	    }
 	    Movie.aggregate([
 	      {$match:
@@ -91,7 +89,7 @@ exports.findTheNearestTime = function(context, callback){
 	  },
 	  {$sort: {difference: 1}
 	},
-	// {$limit: 5},
+	{$limit: 10},
 	{$group:{
 	    _id: "$cinemaName",
 	    title: {$first: '$title'},
@@ -103,3 +101,31 @@ exports.findTheNearestTime = function(context, callback){
 	  return callback(null, result);
 	})
 }
+
+
+
+exports.NowShowing = function(recipient, callback){
+	var recipientId = recipient;
+	var query = {};
+	console.log('inside now showing now');
+	Movie.aggregate([
+			{$match: query},
+			{$group: 
+				{	_id:{ 
+					title: "$title"},
+
+					imageLink: { $first: "$imageLink"}
+				}
+			}
+
+		], function(err, result){
+			console.log('now showing results are: ',result);
+			if(err) return(err);
+			//console.log('let me check the aggregation result: ', result);
+			return callback(null, result);
+			//this here should return an array of movie names & imageLink [{id:{title: $title}, imageLink: $imageLink}]
+		})
+}
+
+
+

@@ -21,9 +21,9 @@ var movieSchema = new Schema({
     bookingLinks: {
       type: [String]
     },
-    // imageLink: {
-    //   type: String
-    // }
+    imageLink: {
+      type: String
+    }
 });
 
 // the schema is useless so far
