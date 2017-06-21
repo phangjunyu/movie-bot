@@ -27,6 +27,7 @@ const ams = require('./webscraper/allMoviesScraper');
 const sms = require('./webscraper/singleMovieScraper');
 var region = require('./region');
 var cronJob = require('./JS/cronjob');
+var cool = require('cool-ascii-faces');
 
 
 
@@ -57,7 +58,7 @@ try {
 }
 
 // Webserver parameter
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8000;
 
 // Wit.ai parameters
 const WIT_TOKEN = process.env.WIT_TOKEN || '2DOU3VRLIV27HARM4STH5ORTKVQ3LCDV';
@@ -67,12 +68,12 @@ const WIT_TOKEN = process.env.WIT_TOKEN || '2DOU3VRLIV27HARM4STH5ORTKVQ3LCDV';
 
 
 //for hotelbot
-const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAX94gbB7OIBAOgYNQ4QOa3g6VWaubXns9ZBHHzj1T4D8ZBX5Fia6mm1REY2KdZA7xK7LCZA1IVfNQD3QdN6lLGiU2chBkVCOeo3ZBfjZCaA9osCBgQQFNAL89A4tPEd8ZBRbD9deZCZC4FyAZBfIxEfVlMlvc1KYi6dXfRmsZCBX9vkgZDZD';
+const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAASxt4nsAk4BAOWg37Edeu474i71JSCL96tOZBPVDlrZBb6YmWD1hewxpMSGdD8OfUni4hwESlQdRgPZCgF6jXZAZBs2vTetaC88wZBBwhWegoGg3yjMEwlNZARLuLZBufqApsbro7XLyCtuCWxVPZBSj7nMMvZBO4ppDNdfwfFA2eFwZDZD';
 //const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAX94gbB7OIBAMrbsh8nr2n6s2Y2QWaQwhZAN9bTSFbhzu8tRTFZBVoad21hJHhIoW6zjqGsQyHqjA4QQbgnTBdXDKb6lxqQjZBoIml93HlyuHPHtzVKgPMM6Ha7GyDHPndYRSjqFxQjo8ikrIJre9ABbdwZBqN8RZBaV5KsSQAZDZD';
 if (!FB_PAGE_TOKEN) { throw new Error('missing FB_PAGE_TOKEN') }
 
 
-const FB_APP_SECRET = process.env.FB_APP_SECRET || '84f1b7362715035cd132a3fd67ed4c5f';
+const FB_APP_SECRET = process.env.FB_APP_SECRET || '56bed957d0011a5a5e12d7777a302f26';
 //for mymoviebot
 // const FB_APP_SECRET = process.env.FB_APP_SECRET || '16b510b46fe3a12f91a42acb2ba5b2d4';
 if (!FB_APP_SECRET) { throw new Error('missing FB_APP_SECRET') }
@@ -715,6 +716,7 @@ function processNowShowingCarousel(result, callback){
 }
 
 function verifyRequestSignature(req, res, buf) {
+  console.log(req.headers);
   var signature = req.headers["x-hub-signature"];
 
   if (!signature) {
@@ -860,6 +862,9 @@ function sendGenericMessage(recipient, elements, accessToken, callback) {
 
 // router.route('/startCronjob')
 //   .get(cronjob.beginCronjob)
+app.get('/cool', function(request, response) {
+  response.send(cool());
+});
 
 cronJob.beginCronjob();
 
