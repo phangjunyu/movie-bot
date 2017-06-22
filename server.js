@@ -358,7 +358,7 @@ const actions = {
         return Promise.resolve(context)
       }
       else if (context.title && context.area){
-        fbMessage(recipientId, "What time? :)\nPlease use pm or am!", function(err, response){})
+        fbMessage(recipientId, "What time? :)\nYou can say something like '3pm' or '9.30am'", function(err, response){})
         return Promise.resolve(context)
       }
       else if((context.title && context.timings) || (context.title && context.area == null && context.timings == null)){
