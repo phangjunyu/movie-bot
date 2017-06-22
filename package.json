@@ -10,14 +10,15 @@
     "async": "latest",
     "body-parser": "^1.17.2",
     "cheerio": "latest",
+    "cool-ascii-faces": "1.3.4",
     "express": "4.15.3",
     "isomorphic-fetch": "^2.2.1",
     "moment": "^2.18.1",
     "mongoose": "^4.10.4",
+    "node-cron": "~1.1.1",
     "node-wit": "^4.2.0",
     "request": "latest",
-    "uuid": "^3.0.0",
-    "node-cron": "~1.1.1"
+    "uuid": "^3.0.0"
   },
   "devDependencies": {
     "babel-cli": "^6.16.0",
