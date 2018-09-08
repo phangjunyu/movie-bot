@@ -61,21 +61,17 @@ try {
 const PORT = process.env.PORT || 8000;
 
 // Wit.ai parameters
-const WIT_TOKEN = process.env.WIT_TOKEN || '2DOU3VRLIV27HARM4STH5ORTKVQ3LCDV';
-
-// Messenger API parameters
-//const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAX94gbB7OIBAEBN8WfWjsdMGH5JD3WORXdY461UhWs5PGFdYhPajN431ivFPGGO7eZCM4nlH4tkuDI7HzdIiwN0xUvFUIA8ckKinM0JZAQkooLeZCqL8uowhZCHrAXxsZCr5xYy669jRruCuzQNpr3S1XYSZCqpY4gg6Or5QoPwZDZD';
-
+const WIT_TOKEN = process.env.WIT_TOKEN || '';
 
 //for hotelbot
-const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAASxt4nsAk4BAOWg37Edeu474i71JSCL96tOZBPVDlrZBb6YmWD1hewxpMSGdD8OfUni4hwESlQdRgPZCgF6jXZAZBs2vTetaC88wZBBwhWegoGg3yjMEwlNZARLuLZBufqApsbro7XLyCtuCWxVPZBSj7nMMvZBO4ppDNdfwfFA2eFwZDZD';
-//const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || 'EAAX94gbB7OIBAMrbsh8nr2n6s2Y2QWaQwhZAN9bTSFbhzu8tRTFZBVoad21hJHhIoW6zjqGsQyHqjA4QQbgnTBdXDKb6lxqQjZBoIml93HlyuHPHtzVKgPMM6Ha7GyDHPndYRSjqFxQjo8ikrIJre9ABbdwZBqN8RZBaV5KsSQAZDZD';
+const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || '';
+//const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN || '';
 if (!FB_PAGE_TOKEN) { throw new Error('missing FB_PAGE_TOKEN') }
 
 
-const FB_APP_SECRET = process.env.FB_APP_SECRET || '56bed957d0011a5a5e12d7777a302f26';
+const FB_APP_SECRET = process.env.FB_APP_SECRET || '';
 //for mymoviebot
-// const FB_APP_SECRET = process.env.FB_APP_SECRET || '16b510b46fe3a12f91a42acb2ba5b2d4';
+// const FB_APP_SECRET = process.env.FB_APP_SECRET || '';
 if (!FB_APP_SECRET) { throw new Error('missing FB_APP_SECRET') }
 const FB_VERIFY_TOKEN = "VOUCHMOVIEBOT";
 // crypto.randomBytes(8, (err, buff) => {
